@@ -1,0 +1,325 @@
+<?xml version="1.0" ?>
+
+<!DOCTYPE article SYSTEM "/usr/share/sgml/docbook/dtd/xml/4.5/docbookx.dtd">
+
+
+<article status="draft" class="specification"> <title>Discrete Events System asynchronous 
+	framework. Design.</title>
+
+    <articleinfo>
+	<author><personname><firstname>Yuri</firstname><surname>Borisov</surname></personname>
+	    <email>yuri.borisov.v@gmail.com</email></author> 
+
+	<releaseinfo>Ver.0.01 at 10-May-2017</releaseinfo>
+
+	<abstract>
+	    <simpara>This document outlines desing of Discrete Events System Asyncronous Framework</simpara>
+	</abstract>
+
+	<revhistory>
+	    <revision> <revnumber>0.01</revnumber> <date>10-Mar-2017</date> <authorinitials>Yuri Borisov</authorinitials>
+		<revremark>Initial version</revremark> </revision>
+	</revhistory>
+
+    </articleinfo>
+
+    <bibliolist><title>References</title>
+	<biblioentry id="ref_incr_mut"> <abbrev>INCR_MUT</abbrev>
+	    <productname><ulink url="../../../fap-doc/doc_incr_syst_creation/index.html "/></productname>
+	    <title>Y.Borisov. Using incremental mutation process for systems modeling</title> </biblioentry>
+	<biblioentry id="ref_dsa_swd"> <abbrev>DSA_SWD</abbrev>
+	    <productname><ulink url="../../../fap-doc/doc_dsa_in_swd/index.html"/></productname>
+	    <title>Using of Synchronous Discrete Time System paradigm in software development</title> </biblioentry>
+    </bibliolist>
+
+
+    <glossary> <title>Glossary</title> 
+	<glossentry id="gls_cp"><glossterm>CP</glossterm> <acronym>CP</acronym>
+	    <glossdef> <para>Connection Point</para> <para>
+		    Element that is used as endpoint of connections between systems.  
+	</para></glossdef> </glossentry>
+	<glossentry id="gls_daa"><glossterm>DAA</glossterm> <acronym>DAA</acronym>
+	    <glossdef> <para>Distributed Agents Approach</para> <para>
+		    Approach of multi-agent system that assumes that the modes is distributed among several environments that 
+		    can be running on undependent executable enviromnents.
+		    Ref <ulink url="../../../grayb/doc/design/index.html#ds_daa"/> </para></glossdef> </glossentry>
+	<glossentry id="gls_des"><glossterm>DES</glossterm> <acronym>DES</acronym>
+	    <glossdef> <para>Discrete Events System - a discrete-state, event-driven system of which the state
+		    evolution depends entirely on the occurrence of asynchronous discrete events over time.
+		    DES consists solely of discrete state spaces and event-driven state transition mechanisms.
+		    Ref <ulink url="https://en.wikipedia.org/wiki/Discrete_event_dynamic_system"/>
+	</para></glossdef> </glossentry>
+	<glossentry id="gls_dhc"><glossterm>DHC</glossterm> <acronym>DHC</acronym>
+	    <glossdef> <para>Direct Hierarchical Chromosome</para> <para>
+		    Approach of multi-agent system definition that describes the model's structure directly. 
+		    Ref <ulink url="../../../grayb/doc/design/index.html#ds_smc"/> </para></glossdef> </glossentry>
+	<glossentry id="gls_ep"><glossterm>EP</glossterm> <acronym>EP</acronym>
+	    <glossdef> <para>Extention Point</para> <para>
+		    Element that is used as mediator between two <xref linkend="gls_cp"/>. It is used to "extend" objects internal connection point
+		    to the object iface.
+	</para></glossdef> </glossentry>
+	<glossentry id="gls_fapws"><glossterm>FAPWS</glossterm> <acronym>FAPWS</acronym>
+	    <glossdef> <para>Finite Automata Programming Workspace</para> <para>
+		    Initial project dedicated to creation C++ API for <xref linkend="gls_des"/>.
+		    Ref <ulink url="../../../fapws"/> </para></glossdef> </glossentry>
+    </glossary>
+
+    <sect1 id="ds_intro"> <title>Introduction</title>
+	<sect2 id="ds_intro_i"><title>Retrospective</title>
+	    <simpara>This project is continuation of development of modelling environment basing on 
+		<xref linkend="gls_des"/>. There were two attempts to create such an environment. The first 
+		project FAPWS was for creating C++ framework basing on ideas of synchronous events system. The 
+		system here runs in system time each tick of that causes the system update.
+		Ref <xref linkend="ref_dsa_swd"/> for outline of the approach. The framework was developed and
+		verified. Ref <ulink url="../../../fap-balls/"/>  for one test application simulating the
+		dynamics of clashing balls in the 2d space.</simpara>
+	    <simpara>Main part of concept of the framework was using of configurable connections in order to 
+		assemble the system from system parts - states and subsystem. It was seen that the implementation of
+		connections had many limitations that makes system creation hard and unsafe. Also transition
+		function configuration was not implemented in the scope of the project base approach.
+		So it was realized that we need some base framework to build DES fremwork itself.</simpara>
+	    <simpara>Multiagent framework was suggested as the build base for DES framework. The project GRAYB was
+		initiated for creating multiagent based DES, ref <ulink url="../../../grayb/"/> for the
+		project. The idea of that framework was to have base configurable environment that consists of 
+		many atomic elements - agents. The base agent supports just changing from configuration spec ("chromosome").
+		The changing also includes creating new agent basing on existing agent. In order to get access to any
+		agents they are organized as native hierarchies with owner-owned and parent-child relations.
+		Also the specialized agents were introduced for creating some layers of modelling. For instance 
+		the DES systems connection problems detected in FAPWS was solved by implementing graph layer with
+		dedicated agent for "edge".  So the creating of the whole system is the process of evolving root
+		agent's chromosome.  </simpara>
+	    <simpara>The next step of multi-agent approach evolution was distributed mutli-agent system. The project
+		was created for that - "FAP2-SRV", ref <ulink url="../../../fap2-srv/"/>. The main approach for 
+		distributing the multi-agent system was creating of agents proxies that "hide" the real agent from
+		the "client" when the agent was in remote environment. Proxy in that case interacts to the real agent
+		via RPC. But there was problem realized that synchronous API of agent makes the RPC complex. Is was
+		seemed that the interaction can be silmplified if we managed to create agent with asynchronous API.
+		But what would be approach of such asycn agents? The initial idea is to use DES again but on 
+		level of agents framework.
+	    </simpara>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_chaci"><title>Analysis: changing agents content interaction</title>
+	<simpara>See the interaction diagram below:</simpara>
+	<figure id="fig_chaci"><title>Agent's content changing interactions</title><imageobject>
+		<imagedata fileref="pics/desa_mdl_chg_agents_content_icd.jpg"/> </imageobject></figure>
+	<simpara>There are 3 actors here: Client (some subject external to the model), agent and agent's owner. Note, that the
+	    interaction doesn't completelly correspond to currently implemented scheme.
+	    Currently the agent's content is not accepted by owner (to be more presize the owner is notified
+	    and checks out the content but cannot revoke the content changed).
+	    It is not consistent with the overall policy - any mutation of agents are to be accepted.</simpara>
+	<simpara>This interaction suggests the following DES topology.</simpara>
+	<figure id="fig_chacdes"><imageobject>
+		<imagedata fileref="pics/desa_change_content.jpg"/> </imageobject></figure>
+    </sect1>
+
+    <sect1 id="ds_conn"><title>Is Connection class needed as specific artifact of connection or references to pair is enough?
+	</title>
+	<sect2><title>Intro</title>
+	    <simpara>Currently in <xref linkend="gls_fapws"/> project specific class CAE_ConnBase for connection.
+		So conn point includes all its connection as attributes. But do we really need it. Another approach is
+		to keep pairs in conn point instead of the connections.</simpara>
+	</sect2>
+	<sect2><title>Connections are still needed</title>
+	    <simpara>There is use-case when user want to disconnect the conn point from another conn point in the connenctions
+		chain. Example is:</simpara>
+	    <programlisting>
+		State A CP is connected to Object B EP
+		Object B EP is connected to internal State C CP
+		So Object A CP has reference to final connection State C CP.
+	    </programlisting>
+	    <simpara>If the user wants to remove particular connection from A to B it can specify the corresponding connection.
+		In case if we don't have connections stored for each CP it will be not possible to specify what part of
+		connection chain need's to be eliminated because CP stores only final pair in the chain.</simpara>
+	    <simpara>So we need both final CPs and connection for any CP in the system. Note that in current
+		<xref linkend="gls_fapws"/> CP doens't include its final pairs. Actually the connection in that case
+		can be replaced with just direct pair stated in conn point. In FAPWS another solution is used - conn point
+		keeps connections. This is because FAPWS uses creating-by-spec approach and connection objects are used
+		to create connection.</simpara>
+	    <simpara>Why refs to final pairs are needed. They are served as cache and required to avoid long searching of
+		final CPs each time transition function requested data from state's inputs.  </simpara>
+	</sect2>
+	<sect2><title>Facts of connection implementation in <xref linkend="gls_fapws"/></title>
+	    <itemizedlist>
+		<listitem>There are "source" and "destination" within multilink connection point CAE_ConnPoint. Source 
+		    is the ref to the state represented by conn point. 
+		    <simpara>Ref CAE_StateBase::ConstructL() to see that state sets itself as "source" pin into
+			state output connpoint.</simpara>
+		</listitem>
+		<listitem>There is reference to state in connpoint. At least "source" part of connpoint is set as
+		    pointer to state.
+		</listitem>
+	    </itemizedlist>
+	</sect2>
+    </sect1>
+
+    <sect1><title>Do we need interface resolution mechanism?</title>
+	<sect2><title>Intro</title>
+	    <simpara>All implementations of DES engines including <xref linkend="gls_fapws"/> is considering interface as
+		its atomic element.  Keeping in mind that low-level DES is to be used for creating mutable DES the assumption
+		would be that all we need is to resolve connection point of mutable DES base agent. Conn point in its turn provides
+		access to state's data.</simpara>
+	    <simpara>So we can see that in any case there should be some elementary interfaces (conn point, state etc)</simpara>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_duc"><title>[<glossterm id="gls_duc">DUC</glossterm>] DES update cycle</title>
+	<sect2><title>Actors</title>
+	    <simpara>The actors are:</simpara>
+		<itemizedlist>
+		    <listitem>State - consists of data and transition function</listitem>
+		    <listitem>System - consists of states and subsystems. Serves as owner for its state and subsystems.</listitem>
+		    <listitem>Subsystem - system</listitem>
+		    <listitem>Root system - upper layer system</listitem>
+		    <listitem>Cycle controller - controls root system</listitem>
+		</itemizedlist>
+	</sect2>
+	<sect2><title>FAPWS Cycle overview</title>
+	    <simpara>Note that base class CAE_EBase of DES elements supports statuses iUpdated, iActive.
+		iUpdated shows that the object (State for instance) is updated 
+	    and needs to be confirmed. iActive shows that the object is not up-to date and needs to be updated.</simpara>
+	    <orderedlist>
+		<listitem>On system creation it and all it's subsystems and states are marked as active. This is done in base class </listitem>
+		<listitem>Cycle controller request root system to update in case it's active (API: CAE_EBase::Update)</listitem>
+		<listitem>Root system propagates update request to it's components. Note that each system during the proparation process sets
+		    the component to the state iUpdated.</listitem>
+		<listitem>On "Update" request states recalculate it's data (API CAE_StateBase::DoTrans)</listitem>
+		<listitem>Cycle controller request root system to confirm updates (API: CAE_StateBase::Confirm)</listitem>
+		<listitem>Root system propagates confirm request to its components</listitem>
+		<listitem>On "Confirm" request state checks if current data got via update differs from final data (i.e. confirmed data).
+		    If so state copies data to its confirmed data register and notifies all states dependent (i.e.
+		    connected to the current state output) (API: CAE_EBase::SetActive).</listitem>
+		<listitem>On SetActive request any DES elements proparates the request to its owner.</listitem>
+	    </orderedlist>
+	    <simpara>Notes:</simpara>
+	    <orderedlist>
+		<listitem>Do we really need iUpdated status? </listitem>
+	    </orderedlist>
+	</sect2>
+	<sect2><title>GRAYB Cycle overview</title>
+	    <simpara> Sketchy the cycle is as: </simpara>
+	    <orderedlist>
+		<listitem>On system creation it and all it's subsystems and states are marked as active (API: SetActive).</listitem>
+		<listitem>Cycle controller request root system to update in case it's active (API: Update)</listitem>
+		<listitem>Root system propagates update request to it's components</listitem>
+		<listitem>On "Update" request states recalculate it's data and mark itself as updated (API: SetUpdated)</listitem>
+		<listitem>Cycle controller request root system to confirm updates (API: Confirm)</listitem>
+		<listitem>Root system propagates confirm request to its components</listitem>
+		<listitem>On "Confirm" request state copies data to its confirmed data register and notifies all states dependent (i.e.
+		    connected to the current state output) (API: OnUpdated).
+		    <programlisting> NOTE: I don't see the logic of generating notification only in case of state data is changed. To analyze.
+		    </programlisting>
+		</listitem>
+	    </orderedlist>
+	</sect2>
+	<sect2 id="ds_duc_async"><title>Proposed DES update cycle - asynchronous variant</title>
+	    <simpara>Asynchronous variant assumes that APIs doesn't return operation completion confirmation. This causes to elements interaction
+	    get more complicated than that in case of sync APIs.</simpara>
+	    <simpara>The foollowing API is proposed:</simpara>
+	    <simpara>Owned element in hierarchy. API supports descending signals.</simpara>
+	    <itemizedlist>
+		<listitem>Update</listitem>
+		<listitem>Confirm</listitem>
+		<listitem>OnActivatedHandled - responce from owner on OnCompActivated</listitem>
+	    </itemizedlist>
+	    <simpara>Destination element - element that receives state's data. API supports horisontal signals.</simpara>
+	    <itemizedlist>
+		<listitem>OnSourceChanged - when source is changed (i.e. inputs)</listitem>
+	    </itemizedlist>
+	    <simpara>Source element - state that provides the data for another state. API supports horisontal signals.</simpara>
+	    <itemizedlist>
+		<listitem>OnChangedHandled - confirmation on OnSourceChanged from dependant</listitem>
+	    </itemizedlist>
+	    <simpara>Owning element in hierarchy. API supports ascending signals.</simpara>
+	    <itemizedlist>
+		<listitem>OnCompActivated - when component marks itself active</listitem>
+		<listitem>OnCompUpdated - when compoments completes its update</listitem>
+		<listitem>OnCompConfirmed - when compoments completes its confirm</listitem>
+	    </itemizedlist>
+	    <simpara>See the diagram below outlining the APIs</simpara>
+	    <figure id="fig_puca"><title>Proposed DES update cycle asynchronous - APIs</title><imageobject>
+		    <imagedata fileref="pics/desa_cycle_clsd.jpg"/> </imageobject></figure>
+	    <simpara>The cycle is:</simpara>
+	    <orderedlist>
+		<listitem>On system creation the system and all it's subsystems and states are marked as active. This is done in base class
+		    constructor.</listitem>
+		<listitem>Root system send update request to it's components (Owned::Update) for each component that is active</listitem>
+		<listitem>Subsystems just propagate ascending and descending requests.</listitem>
+		<listitem>On "Update" request states recalculate it's data and notifies owner on update completion (Owning::OnCompUpdated).</listitem>
+		<listitem>Subsystem checks if all comps get updated and if so notifies owner (Owning::OnCompUpdated). Root system checks if
+		    all comps get updated and then initiates confirmation stage with Owned::Confirm to all its updated components.</listitem>
+		<listitem>Subsystems propagates Confirm downwards.</listitem>
+		<listitem>State receives Confirm request, checks if updated data differs from what was confirmed on previous cycle. If so then
+		    state copies updated data to confirmed data and notifies all depentants (Dependant::OnDepChanged)</listitem>
+		<listitem>Dependants received OnDepChanged notification marks themself as active and notifies upward with Owning::OnCompActivated</listitem>
+		<listitem>OnCompActivated notifications are propagated upwards till root system.</listitem>
+	    </orderedlist>
+	    <simpara>See the diagram below outlining the interactions</simpara>
+	    <figure id="fig_desa_cycle_async_icd"><title>Proposed DES update cycle - APIs</title><imageobject>
+		    <imagedata fileref="pics/desa_cycle_async_icd.jpg"/> </imageobject></figure>
+	</sect2>
+	<sect2 id="ds_duc_sync"><title>Proposed DES update cycle - synchronous variant</title>
+	    <simpara>The foollowing API is proposed:</simpara>
+	    <simpara>Owned element in hierarchy. API supports descending signals.</simpara>
+	    <itemizedlist>
+		<listitem>Update</listitem>
+		<listitem>Confirm</listitem>
+	    </itemizedlist>
+	    <simpara>Destination element - element that receives state's data. API supports horisontal signals.</simpara>
+	    <itemizedlist>
+		<listitem>OnSourceChanged - when source is changed (i.e. inputs)</listitem>
+	    </itemizedlist>
+	    <simpara>Owning element in hierarchy. API supports ascending signals.</simpara>
+	    <itemizedlist>
+		<listitem>OnCompActivated - when component marks itself active</listitem>
+	    </itemizedlist>
+	    <simpara>See the diagram below outlining the APIs</simpara>
+	    <figure id="fig_desa_cycle_sync_api"><title>Proposed DES update cycle synchronous - APIs</title><imageobject>
+		    <imagedata fileref="pics/desa_cycle_sync_api_clsd.jpg"/> </imageobject></figure>
+	</sect2>
+    </sect1>
+
+    <sect1 id="id_conn"><title>Connections</title>
+	<sect2 id="id_conn_cpt"><title>Compatibility</title>
+	    <sect3><title>Intro</title>
+		<simpara>Ref <ulink url="rq_cpcmp"/> for the requirements. According to the requirement the connection points needs to be 
+		compatible to be connected. What the compatibility can be based on? What would be approaches of checking the compatibility?</simpara>
+	    </sect3>
+	    <sect3><title>Capabilities as base of compatibility.</title>
+		<simpara>One of the approaches is that any CP has to posess set of capabilities that can be used for checking if CPs are
+		    compatible. For instance the direction (Input/Output) can be one of such capabilities.</simpara>
+	    </sect3>
+	</sect2>
+	<sect2><title>CP as the representative of owning node. Two-way utilizing of CP.</title>
+	    <simpara>CP represents the node (state or system) that includes thes CP. For instance state's output CP represents state via
+		specific state's interface (MState) that gives access to state's data. State's inputs represents containing state via interface
+		MStateObserver that allows to notify the state of input's change.</simpara>
+	    <simpara>So when two CPs A and B are connected they can be used in two-way manner. Owner A can interact to owner B via interface
+		represented by B, and vise versa. So any CP "provides" (i.e. represents) some interface and requires some interface from its
+		pair.</simpara>
+	    <simpara>Any CP provides the client (i.e. the node owning the CP) with the set of interface instances represented by connected CPs.
+		How CP knows what ifaces it needs to provide and what interface it requires?
+		Client creating the CP should provide this information. These interface types can be included into CP capabilities. We can
+		use C++ template parameter to customize CP with "Provided" and "Required" interface types.</simpara>
+	    <simpara>Actually at the moment we don't need more interface type that that the state provides and requires - MStateObserver and MState.
+		So these interfaces can be selected basing on CP direction (input or output).
+	    </simpara>
+	</sect2>
+	<sect2><titler></titler>
+	</sect2>
+    </sect1>
+
+    <sect1><title>Support of system topology. Node base for all nodes in the system topology.</title>
+	<sect2><title>Intro</title>
+	    <simpara>The whole system is combined from subsystems and states. This gives up tree-type topology for the system. Similar topology 
+		can be applied to connection network, where connection point can have complex treeish structure in order to compact intersystems 
+		connection. So it makes sense to support treish hierarchy on level of base class - Node.</simpara>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_th"><title>To handle</title>
+
+    </sect1>
+
+</article>

@@ -1,0 +1,194 @@
+<?xml version="1.0" ?>
+
+<!DOCTYPE article SYSTEM "/usr/share/sgml/docbook/dtd/xml/4.5/docbookx.dtd">
+
+
+<article status="draft" class="specification"> <title>Discrete Events System framework. Requirements.</title>
+
+    <articleinfo>
+	<author><personname><firstname>Yuri</firstname><surname>Borisov</surname></personname>
+	    <email>yuri.borisov.v@gmail.com</email></author> 
+
+	<releaseinfo>Ver.0.01 at 12-May-2017</releaseinfo>
+
+	<abstract>
+	    <simpara>This document collects use-cases and software requirements for Discrete Events System framework</simpara>
+	</abstract>
+
+	<revhistory>
+	    <revision> <revnumber>0.01</revnumber> <date>12-May-2017</date> <authorinitials>Yuri Borisov</authorinitials>
+		<revremark>Initial version</revremark> </revision>
+	</revhistory>
+
+    </articleinfo>
+
+    <glossary> <title>Glossary</title> 
+	<glossentry id="gls_connpoint"><glossterm>Connection Point</glossterm>
+	    <glossdef> <para>Element that is used as endpoint of connections between systems.  
+	</para><glossseealso otherterm="gls_cp"/></glossdef> </glossentry>
+	<glossentry id="gls_cp"><glossterm>CP</glossterm> <acronym>CP</acronym>
+	    <glossdef> <para>Connection Point - Element that is used as endpoint of connections between systems.  
+	</para><glossseealso otherterm="gls_connpoint"/></glossdef> </glossentry>
+	<glossentry id="gls_edge"><glossterm>Edge</glossterm>
+	    <glossdef> <para>Agent that represents edge in graph model layer.
+	</para><glossseealso otherterm="gls_vertex"/></glossdef> </glossentry>
+    </glossary>
+
+    <bibliolist><title>References</title>
+    </bibliolist>
+
+    <sect1 id="nimp"><title>Treaceability: not implemented yet</title>
+	<itemizedlist>
+	    <listitem> <xref linkend="uc_013"/>, ref discussion <xref linkend="uc_013_dsc_01"/></listitem>
+	</itemizedlist>
+    </sect1>
+
+    <sect1 id="trac_impl"><title>Treaceability: implemented</title>
+	<itemizedlist>
+	    <listitem> <xref linkend="uc_029"/>, via marking removed node as deleted but keeping it in runtime model </listitem>
+	</itemizedlist>
+    </sect1>
+
+    <sect1 id="uc"> <title>Use cases</title>
+	<sect2><title>Two connected subsystems gets disconnected</title>
+	    <sect3><title>Actors</title>
+		<itemizedlist>
+		    <listitem>CLIENT: client of SYSTEM</listitem>
+		    <listitem>Subsystem A, subsystem B</listitem>
+		</itemizedlist>
+	    </sect3>
+	    <sect3><title>Preconditions</title>
+		<simpara>Subsytems A and B are connected A-to-B</simpara>
+	    </sect3>
+	    <sect3><title>Assumptions</title> </sect3>
+	    <sect3><title>Normal</title>
+		<itemizedlist>
+		    <listitem>CLIENT disconnects connection between A and B</listitem>
+		    <listitem>Subsystem B is marked as active and will be updated next cycle.</listitem>
+		</itemizedlist>
+	    </sect3>
+	    <sect3><title>Alternative</title> <simpara>Alternative flows</simpara> </sect3>
+	    <sect3><title>Exceptions</title> </sect3>
+	    <sect3><title>Variations</title> </sect3>
+	    <sect3><title>Extends</title></sect3>
+	    <sect3><title>Extended by</title> </sect3>
+	    <sect3><title>Relates to</title>
+		<itemizedlist>
+		    <listitem><xref linkend=""/></listitem>
+		</itemizedlist>
+	    </sect3>
+	    <sect3><title>Discussion</title> </sect3>
+	    <sect3><title>Clarification</title> </sect3>
+	    <sect3><title>Desing</title> </sect3>
+	</sect2>
+	<sect2><title>One of two connected states gets deleted - required interfaces set is updated</title>
+	    <sect3><title>Actors</title>
+		<itemizedlist>
+		    <listitem>CLIENT: client of SYSTEM</listitem>
+		    <listitem>States A and B</listitem>
+		</itemizedlist>
+	    </sect3>
+	    <sect3><title>Preconditions</title>
+		<simpara>States A and B are connected A output CP - to - B input CP</simpara>
+	    </sect3>
+	    <sect3><title>Assumptions</title> </sect3>
+	    <sect3><title>Normal</title>
+		<itemizedlist>
+		    <listitem>CLIENT delete state A</listitem>
+		    <listitem>The set of required interfaces in state B input CP is updated - interface related to A output is removed</listitem>
+		</itemizedlist>
+	    </sect3>
+	    <sect3><title>Alternative</title> <simpara>Alternative flows</simpara> </sect3>
+	    <sect3><title>Exceptions</title> </sect3>
+	    <sect3><title>Variations</title> </sect3>
+	    <sect3><title>Extends</title></sect3>
+	    <sect3><title>Extended by</title> </sect3>
+	    <sect3><title>Relates to</title>
+		<itemizedlist>
+		    <listitem><xref linkend=""/></listitem>
+		</itemizedlist>
+	    </sect3>
+	    <sect3><title>Discussion</title> </sect3>
+	    <sect3><title>Clarification</title> </sect3>
+	    <sect3><title>Desing</title> </sect3>
+	</sect2>
+    </sect1>
+
+    <sect1 id="rq"> <title>Requirements</title>
+	<sect2 id="rq_so"><title>[SO] States and systems</title>
+	    <simpara>There shall be dedicated classes for state and system. State is base element of DES and represents data (one coordinate of 
+		system's data vector) that is modified by transition function.
+	    </simpara>
+	    <simpara>System is just collection of states. System represents system that contains vector of states.
+	    </simpara>
+	</sect2>
+	<sect2 id="rq_io"><title>Input and outputs. Connection points.</title>
+	    <simpara>State and system shall have inputs and output. Inputs are arguments of transition function. Output is output of state data.</simpara>
+	    <simpara>From transition function side any input represents the data the state is dependent on. The data can be not just
+		primitive but complex, i.e. consists of other data.</simpara>
+	    <simpara>System also shall have inputs and outputs. Actually these inputs and outputs shall be just proxy of some inputs and
+		outputs of object's internal states.</simpara>
+	    <simpara>Inputs and outputs are used to connect part of system (systems and states).
+		Connection point is an abstraction for input and output.</simpara>
+	</sect2>
+	<sect2 id="rq_cn"><title>Connection</title>
+	    <simpara>There shall be connection implemented. Connection is an abstraction that assosiates output of some source state to input of
+		some destination state. I.e. connection assosiates connection points.
+		This assosiation allows to get via the input the data from assosiated output. This mechanism should be
+		hidden from input's client (transition function for instance).</simpara>
+	    <simpara>We will call inputs and outputs (i.e. things that are being connected) as "Connection Points".</simpara>
+	</sect2>
+	<sect2 id="rq_ext"><title>Extention</title>
+	    <simpara>There shall be mechainsm to assosiate object's output to the output of corresponding internal state. Such assosiation
+		will be called extention. It differs from connection: connection assosiates output-to-input but extention input-to-input. Extention
+		just "extend" internal state output to output of the object owned the state.</simpara>
+	</sect2>
+	<sect2 id="rq_cpcmp"><title>Compatibility of connection points.</title>
+	    <simpara>There shall be support of connection points specialization. Input and output is an example of such specialization. There
+		shall be restriction of connecting connection points depending on their specialization. Connection point that meet these restrictions
+		will be used compatible. There shall be compatibility check when connection points get connected.</simpara>
+	</sect2>
+    </sect1>
+
+    <sect1 id="rqp"><title>Proposals</title>
+    </sect1>
+
+    <sect1 id="rqt"><title>Templates</title>
+	<sect2 id="rqt_uc"><title>UC_XXX Use-case name</title>
+	    <sect3><title>Actors</title>
+		<itemizedlist>
+		    <listitem>CLIENT: client of SYSTEM</listitem>
+		</itemizedlist>
+	    </sect3>
+	    <sect3><title>Preconditions</title> </sect3>
+	    <sect3><title>Assumptions</title> </sect3>
+	    <sect3><title>Normal</title>
+		<itemizedlist>
+		    <listitem>CLIENT creates MODEL </listitem>
+		</itemizedlist>
+	    </sect3>
+	    <sect3><title>Alternative</title> <simpara>Alternative flows</simpara> </sect3>
+	    <sect3><title>Exceptions</title> </sect3>
+	    <sect3><title>Variations</title> </sect3>
+	    <sect3><title>Extends</title></sect3>
+	    <sect3><title>Extended by</title> </sect3>
+	    <sect3><title>Relates to</title>
+		<itemizedlist>
+		    <listitem><xref linkend=""/></listitem>
+		</itemizedlist>
+	    </sect3>
+	    <sect3><title>Discussion</title>
+		<orderedlist>
+		    <listitem>Some discussion materials</listitem>
+		</orderedlist>
+	    </sect3>
+	    <sect3><title>Clarification</title> </sect3>
+	    <sect3><title>Desing</title>
+		<orderedlist>
+		    <listitem>Ref to related desing materials</listitem>
+		</orderedlist>
+	    </sect3>
+	</sect2>
+    </sect1>
+
+</article>

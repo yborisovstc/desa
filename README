@@ -1,0 +1,3 @@
+This project is for development of Discrete Events System (DES) based low-level framework.
+The intention is that this framwork to be used in asynchronous variant of multi-agent
+environment framework that in turn is the base of creating DES high-level modelling environment.
