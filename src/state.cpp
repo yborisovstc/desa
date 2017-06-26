@@ -22,6 +22,9 @@ State::~State()
 
 void State::Update()
 {
+    if (mOwner != NULL) {
+	mOwner->OnCompUpdated(this);
+    }
 }
 
 void State::Confirm()
@@ -35,8 +38,11 @@ void State::Confirm()
 	    MStateObserver* obs = *iobs;
 	    obs->OnSourceChanged();
 	}
+	memcpy(Conf(), Upd(), Len()); // Upd to Conf
     }
-    memcpy(Conf(), Upd(), Len()); // Upd to Conf
+    if (mOwner != NULL) {
+	mOwner->OnCompConfirmed(this);
+    }
 }
 
 void State::Run()

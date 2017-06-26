@@ -306,7 +306,16 @@
 		So these interfaces can be selected basing on CP direction (input or output).
 	    </simpara>
 	</sect2>
-	<sect2><titler></titler>
+	<sect2><title>Connection</title>
+	    <sect3><title>Intro</title>
+		<simpara>Connection (or connector) is the the object that creates connection between two connection points.
+		    It is the question if we need connector as specific object, in fact we can establish connection via specifying
+		    pair for both of connection points being connected.</simpara>
+	    </sect3>
+	    <sect3><title>Connection point is needed for dynamic configuration of the connections.</title>
+		<simpara>There is use-case when connection should be established in the scope of DES system running, i.e. some
+		state transition function can update connection (or data of connection) as state's data.</simpara>
+	    </sect3>
 	</sect2>
     </sect1>
 
@@ -315,6 +324,19 @@
 	    <simpara>The whole system is combined from subsystems and states. This gives up tree-type topology for the system. Similar topology 
 		can be applied to connection network, where connection point can have complex treeish structure in order to compact intersystems 
 		connection. So it makes sense to support treish hierarchy on level of base class - Node.</simpara>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_mtr"><title>Meta transitions</title>
+	<sect2 id="ds_mtr_intro"><title>Intro</title>
+	    <simpara>Meta transition is the term describing case when some system's state controls another system's structure.
+		So the data of state is not primitive data but structure of some system. The structure of system means the components
+		of the system (sub-systems, states, connections, connection points). Can system posess transition (i.e. state) that
+		controls the system itself? In theory so.</simpara>
+	</sect2>
+	<sect2><title>Update cycle for meta transition</title>
+	    <simpara>For simple state the update cycle includes update and confirm phases. This allows to sync the whole system
+		movement. How this sync can be supported for meta transitions?</simpara>
 	</sect2>
     </sect1>
 

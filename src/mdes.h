@@ -39,6 +39,8 @@ namespace desa {
     {
 	public:
 	    virtual void OnCompActivated(MComp* aComp) = 0;
+	    virtual void OnCompUpdated(MComp* aComp) = 0;
+	    virtual void OnCompConfirmed(MComp* aComp) = 0;
     };
 
     /**

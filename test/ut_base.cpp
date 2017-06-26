@@ -53,7 +53,7 @@ void Ut_Base::test_Cre()
 class IncrementorState: public TState<int>
 {
     public:
-	IncrementorState(const int& aData);
+	IncrementorState(const int& aData, MOwner* aOwner = NULL);
 	ConnPoint& Input() { return mInp;};
 	virtual void Update();
     private:
@@ -61,7 +61,7 @@ class IncrementorState: public TState<int>
 };
 
 
-IncrementorState::IncrementorState(const int& aData): TState("Incr", NULL, aData),
+IncrementorState::IncrementorState(const int& aData, MOwner* aOwner): TState("Incr", aOwner, aData),
     mInp("Inp", MConnPoint::EInput, mSobs)
 {
     mOutput = new TConnPointP<MData<int>>("Out", MConnPoint::EOutput, mData);
@@ -72,39 +72,60 @@ void IncrementorState::Update()
     for (MIface* req: mInp.Required()) {
 	MData<int>* tr = *req;
 	int inp = tr->Data();
-	if (mUpd < 12) {
+	if (mUpd < 4) {
 	    mUpd = inp + 1;
 	}
     }
+    State::Update();
 }
+
+/**
+ * @brief Test of creation and running single state
+ */
 
 void Ut_Base::test_Incr()
 {
+    printf("\n === Test of ruinning single state (Iterator)\n");
     int init_data = 0;
     IncrementorState* state = new IncrementorState(init_data);
     bool res = Connect(state->Input(), state->Output());
     CPPUNIT_ASSERT_MESSAGE("Fail to connect inp to output", res);
     state->Run();
     int data = *state;
-    CPPUNIT_ASSERT_MESSAGE("Incorrect data", data == 12);
+    CPPUNIT_ASSERT_MESSAGE("Incorrect data", data == 4);
     delete state;
 }
 
+class Syst1: public System
+{
+    public:
+	Syst1(): System("Syst1", NULL) {
+	    int init_data = 0;
+	    mIncr = new IncrementorState(init_data, NULL);
+	    bool res = Connect(mIncr->Input(), mIncr->Output());
+	    CPPUNIT_ASSERT_MESSAGE("Fail to connect inp to output", res);
+	    AddComp(mIncr);
+	};
+	IncrementorState& Incr() { return *mIncr;};
+    protected:
+	IncrementorState* mIncr;
+};
 
 /**
  * @brief Test of creation simple system
+ * The system contains just one state - incrementor, system doesn't have conn points
+ * Incrementor cycling synchronously, its conn points are connected internally
+ * System should run until Incrementor limit get achieved (state gets inactive) and
+ * then leave running cycle.
+ * 
  */
 void Ut_Base::test_Syst1()
 {
-    System syst("MySystem", NULL);
-    int init_data = 0;
-    IncrementorState* state = new IncrementorState(init_data);
-    bool res = Connect(state->Input(), state->Output());
-    syst.AddComp(state);
-    CPPUNIT_ASSERT_MESSAGE("Fail to connect inp to output", res);
-    state->Run();
-    int data = *state;
-    CPPUNIT_ASSERT_MESSAGE("Incorrect data", data == 12);
+    Syst1 syst;
+    printf("\n === Test of creating simple system and running it\n");
+    syst.Run();
+    int data = syst.Incr();
+    CPPUNIT_ASSERT_MESSAGE("Incorrect data", data == 4);
 }
 
 
