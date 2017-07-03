@@ -13,6 +13,7 @@ class Ut_Base : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST(test_Cre);
     CPPUNIT_TEST(test_Incr);
     CPPUNIT_TEST(test_Syst1);
+    CPPUNIT_TEST(test_Extention1);
     CPPUNIT_TEST_SUITE_END();
 public:
     virtual void setUp();
@@ -21,6 +22,7 @@ private:
     void test_Cre();
     void test_Incr();
     void test_Syst1();
+    void test_Extention1();
 };
 
 CPPUNIT_TEST_SUITE_REGISTRATION( Ut_Base );
@@ -64,7 +66,6 @@ class IncrementorState: public TState<int>
 IncrementorState::IncrementorState(const int& aData, MOwner* aOwner): TState("Incr", aOwner, aData),
     mInp("Inp", MConnPoint::EInput, mSobs)
 {
-    mOutput = new TConnPointP<MData<int>>("Out", MConnPoint::EOutput, mData);
 }
 
 void IncrementorState::Update()
@@ -99,7 +100,7 @@ void Ut_Base::test_Incr()
 class Syst1: public System
 {
     public:
-	Syst1(): System("Syst1", NULL) {
+	Syst1(const string& aName, MOwner* aOwner): System(aName, aOwner) {
 	    int init_data = 0;
 	    mIncr = new IncrementorState(init_data, NULL);
 	    bool res = Connect(mIncr->Input(), mIncr->Output());
@@ -121,11 +122,40 @@ class Syst1: public System
  */
 void Ut_Base::test_Syst1()
 {
-    Syst1 syst;
+    Syst1 syst("Syst1", NULL);
     printf("\n === Test of creating simple system and running it\n");
     syst.Run();
     int data = syst.Incr();
     CPPUNIT_ASSERT_MESSAGE("Incorrect data", data == 4);
 }
 
+
+class Syst2: public Syst1
+{
+    public:
+	Syst2(const string& aName, MOwner* aOwner): Syst1(aName, aOwner) {
+	    mInp = new TConnPointExt<MData<int>, MStateObserver >("Inp", MConnPoint::EInput); 
+	};
+    protected:
+	ConnPointBase* mInp;
+	ConnPointBase* mOut;
+};
+
+
+/**
+ * @brief Simple test of extention
+ * Simple system with single incrementor state, system includes 2 conn points -
+ * extentions, inp and out
+ * 
+ */
+void Ut_Base::test_Extention1()
+{
+    printf("\n === Test of extentions, system with incrementor, loop thru system inp-out\n");
+    /*
+    Syst2 syst("Syst2", NULL);
+    syst.Run();
+    int data = syst.Incr();
+    CPPUNIT_ASSERT_MESSAGE("Incorrect data", data == 4);
+    */
+}
 

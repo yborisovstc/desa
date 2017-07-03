@@ -69,7 +69,9 @@ namespace desa {
 	};
 	public:
 	    TState(const string& aName, MOwner* aOwner, const T& aData):
-		State(aName, aOwner), mConf(aData), mUpd(aData), mData(*this) {};
+		State(aName, aOwner), mConf(aData), mUpd(aData), mData(*this) {
+		    mOutput = new TConnPointP<MData<T>>("Out", MConnPoint::EOutput, mData);
+		};
 	    virtual ~TState() {};
 	    inline operator const T&() const { return mConf;};
 	protected:

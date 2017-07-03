@@ -103,12 +103,13 @@ namespace desa {
     inline bool Connect(MConnPoint& aCp1, MConnPoint& aCp2) { return aCp1.Connect(aCp2) && aCp2.Connect(aCp1); }
 
     /**
-     * @brief Extention of connection point
+     * @brief Extention base
      *
      * This connection point allows to extend another connection point, for instance system's internal state
      * output to the system output.
      *
      */
+    // TODO [YB] To desing templated Extention
     class Extention: public ConnPointBase
     {
 	public:
@@ -118,6 +119,22 @@ namespace desa {
 	    virtual bool IsCompatible(const MConnPoint& aPair, bool aExtd = false) const;
 	protected:
 	    ConnPointBase* mSrc; // Source conn point that is represented by extention, owned
+    };
+
+
+    /**
+     * @brief Extention of connection point TConnPoint
+     *
+     * This connection point allows to extend another connection point, for instance system's internal state
+     * output to the system output.
+     *
+     */
+    template<typename _Provided, typename _Required>
+    class  TConnPointExt: public Extention
+    {
+	public:
+	    TConnPointExt(const string& aName, TDir aDir): Extention(aName, aDir,
+		    new TConnPoint<_Provided, _Required>("Int", aDir, NULL)) {};
     };
 
 } // namespace desa
