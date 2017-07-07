@@ -32,6 +32,7 @@ bool ConnPointBase::IsCompatible(const MConnPoint& aPair, bool aExtd) const
 
 
 
+// ConnPoint providing/requiring
 
 ConnPoint::ConnPoint(const string& aName, MConnPoint::TDir aDir, MIface& aProvided):
     ConnPointBase(aName, aDir), mProvided(aProvided)
@@ -57,6 +58,13 @@ bool ConnPoint::IsCompatible(const MConnPoint& aPair, bool aExtd) const
 {
     bool res = ConnPointBase::IsCompatible(aPair, aExtd);
     return res;
+}
+
+// ConnPoint providing only
+
+ConnPointP::ConnPointP(const string& aName, MConnPoint::TDir aDir, MIface& aProvided):
+    ConnPointBase(aName, aDir), mProvided(aProvided)
+{
 }
 
 

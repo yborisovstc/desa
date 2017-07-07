@@ -2,6 +2,7 @@
 #define __DESA_CONNPOINT__
 
 #include <vector>
+#include <map>
 #include <mconnpoint.h>
 #include "mdes.h"
 
@@ -53,6 +54,19 @@ namespace desa {
 	    TIfaces mRequired;
     };
 
+    /**
+     * @brief Simple Connection Point only providing iface, no required iface needed
+     */
+    class ConnPointP: public ConnPointBase
+    {
+	public:
+	    ConnPointP(const string& aName, TDir aDir, MIface& aProvided);
+	    virtual MIface& Provided() { return mProvided;};
+	    virtual const MIface& Provided() const { return mProvided;};
+	protected:
+	    MIface& mProvided;
+    };
+
 
     template<typename _Provided, typename _Required>
     class TConnPoint: public ConnPoint
@@ -82,7 +96,7 @@ namespace desa {
 
 
     template<typename _Provided>
-	class TConnPointP: public ConnPoint
+	class TConnPointP: public ConnPointP
     {
 	typedef _Provided TProvided;
 
@@ -135,6 +149,37 @@ namespace desa {
 	public:
 	    TConnPointExt(const string& aName, TDir aDir): Extention(aName, aDir,
 		    new TConnPoint<_Provided, _Required>("Int", aDir, NULL)) {};
+    };
+
+    /**
+     * @brief Connection point for state input
+     *
+     * Actually it doesn't represent some role of state - state delegates the role
+     * to input. This role is to get the input data setter. 
+     * So input is ConnPoint that provides role MDataSetter and this role is 
+     * implemented by input itself 
+     */
+    template<typename T>
+    class StateInput: public TConnPointP<MDataSetter<T>>, public MDataSetter<T>
+    {
+	public:
+	    typedef pair<const MIface*, T> TDataElem;
+	    typedef map<const MIface*, T> TData;
+	public:
+	    StateInput(const string& aName, MStateObserver& aObserver):
+		TConnPointP<MDataSetter<T>>(aName, MConnPoint::EInput, *this),
+		mObserver(aObserver) {};
+	    const TData& Data() { return mData;};
+	    // From MDataSetter
+	    virtual void Set(const MIface* aSource, const T& aData) {
+		if (mData.count(aSource) == 0) {
+		    mData.insert(TDataElem(aSource, aData));
+		} else { mData.at(aSource) = aData; }
+		mObserver.OnSourceChanged();
+	    };
+	protected:
+	    TData mData;
+	    MStateObserver& mObserver;
     };
 
 } // namespace desa

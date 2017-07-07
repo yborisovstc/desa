@@ -56,25 +56,23 @@ class IncrementorState: public TState<int>
 {
     public:
 	IncrementorState(const int& aData, MOwner* aOwner = NULL);
-	ConnPoint& Input() { return mInp;};
+	ConnPointBase& Input() { return mInp;};
 	virtual void Update();
     private:
-	TConnPoint<MStateObserver, MData<int> > mInp;
+	StateInput<int> mInp;
 };
 
 
-IncrementorState::IncrementorState(const int& aData, MOwner* aOwner): TState("Incr", aOwner, aData),
-    mInp("Inp", MConnPoint::EInput, mSobs)
+IncrementorState::IncrementorState(const int& aData, MOwner* aOwner): TState<int>("Incr", aOwner, aData),
+    mInp("Inp", mSobs)
 {
 }
 
 void IncrementorState::Update()
 {
-    for (MIface* req: mInp.Required()) {
-	MData<int>* tr = *req;
-	int inp = tr->Data();
+    for (StateInput<int>::TDataElem inp: mInp.Data()) {
 	if (mUpd < 4) {
-	    mUpd = inp + 1;
+	    mUpd = inp.second + 1;
 	}
     }
     State::Update();
@@ -130,6 +128,7 @@ void Ut_Base::test_Syst1()
 }
 
 
+#if 0
 class Syst2: public Syst1
 {
     public:
@@ -141,6 +140,7 @@ class Syst2: public Syst1
 	ConnPointBase* mOut;
 };
 
+#endif
 
 /**
  * @brief Simple test of extention

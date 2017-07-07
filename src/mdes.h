@@ -71,6 +71,12 @@ namespace desa {
 	    virtual const T& Data() const = 0;
     };
 
+    template<typename T> class MDataSetter: public MIface
+    {
+	public:
+	    virtual void Set(const MIface* aSource, const T& aData) = 0;
+    };
+
     /**
      * @brief Named component
      *

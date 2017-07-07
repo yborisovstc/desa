@@ -33,7 +33,7 @@ namespace desa {
 	    virtual ~State();
 	    template<typename T> inline operator const TState<T>&() const;
 	    template<typename T> inline operator const T&() const;
-	    ConnPoint& Output() { return *mOutput;};
+	    ConnPointBase& Output() { return *mOutput;};
 	public:
 	    virtual void Run();
 	    // From MComp
@@ -47,7 +47,7 @@ namespace desa {
 	protected:
 	    StateObserver mSobs;
 	    vector<ConnPoint*> mInputs;
-	    ConnPoint* mOutput;
+	    ConnPointBase* mOutput;
 	    bool mIsActive;
     };
 

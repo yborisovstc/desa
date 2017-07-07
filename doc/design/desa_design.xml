@@ -340,6 +340,34 @@
 	</sect2>
     </sect1>
 
+    <sect1 id="ds_ssci"><title>Using syncronization scheme with state vector cached in inputs</title>
+	<sect2><title>Intro</title>
+	    <simpara>Currently after each cycle of system synchronization the overall state
+		vector is kept in outputs of states. This approach is convenient because it
+		is align with the system math model at most. The drawback of this approach is
+		that on each cycle of system sync the states have to get the status from the
+		states outputs to theirs connected inputs. So the relation between state's 
+		output and connected input of state is bidirectional: input offers interface
+		to be notified of dependent state change, whereas output offers interface to 
+		provide its data to dependent input.</simpara>
+	    <simpara>But there are alternative.</simpara>
+	</sect2>
+	<sect2><title>Cons</title>
+	    <sect3><title>Cannot use multiple connpoint.</title>
+		<simpara>With standard approach the input can contain the set of "required"
+		    interfaces. This is the case when multiple outputs are connected to single
+		    input connection point. Such mechanism simplifies the system in case when
+		    transition function has many identical arguments.</simpara>
+		<simpara>Input cache approach potentiallly can use same technik, we just
+		    need to have set of data in the input. But the problem here is that
+		    there should be association between particular output and data within
+		    the input data set. This is because the input should keep the data from
+		    unchanged outputs but refresh the data by the request from changed outputs.
+		</simpara>
+	    </sect3>
+	</sect2>
+    </sect1>
+
     <sect1 id="ds_th"><title>To handle</title>
 
     </sect1>
