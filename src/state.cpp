@@ -5,11 +5,12 @@
 
 using namespace desa;
 
-State::State(const string& aName): Comp(aName), mSobs(*this), mOutput(NULL), mIsActive(true)
+State::State(const string& aName): Comp(aName), mSobs(*this), mSntf(*this), mOutput(NULL), mIsActive(true), mUninit(true)
 {
 }
 
-State::State(const string& aName, MOwner* aOwner): Comp(aName, aOwner), mSobs(*this), mOutput(NULL), mIsActive(true)
+State::State(const string& aName, MOwner* aOwner): Comp(aName, aOwner), mSobs(*this), mSntf(*this), mOutput(NULL), mIsActive(true),
+    mUninit(true), mOutputsNotified(false)
 {
 }
 
@@ -30,18 +31,16 @@ void State::Update()
 void State::Confirm()
 {
     mIsActive = false;
-    if (memcmp(Conf(), Upd(), Len()))
-    {
+    if (memcmp(Conf(), Upd(), Len()) || mUninit) {
 	ConnPoint* cp = dynamic_cast<ConnPoint*>(mOutput);
 	assert(cp != NULL);
-	for (MIface* iobs : cp->Required()) {
-	    MStateObserver* obs = *iobs;
-	    obs->OnSourceChanged();
-	}
 	memcpy(Conf(), Upd(), Len()); // Upd to Conf
-    }
-    if (mOwner != NULL) {
-	mOwner->OnCompConfirmed(this);
+	NotifyOutputs(cp);
+	mUninit = false;
+    } else {
+	if (mOwner != NULL) {
+	    mOwner->OnCompConfirmed(this);
+	}
     }
 }
 
@@ -50,15 +49,41 @@ void State::Run()
     assert(mOwner == NULL);
 
     while (mIsActive) {
-	Update();
 	Confirm();
+	Update();
     }
 }
 
-void State::HandleSourceChanged()
+void State::HandleInputChanged()
 {
-    mIsActive = true;
-    if (mOwner != NULL) {
-	mOwner->OnCompActivated(this);
+    if (!mIsActive) {
+	mIsActive = true;
+	if (mOwner != NULL) {
+	    mOwner->OnCompActivated(this);
+	}
+    }
+}
+
+void State::HandleStateChangeHandled(MIface* aObserver)
+{
+    TIfSet::size_type res = mNotifUnconfirmed.erase(aObserver);
+    assert(res == 1);
+    if (mOutputsNotified && mNotifUnconfirmed.empty()) {
+	if (mOwner != NULL) {
+	    mOwner->OnCompConfirmed(this);
+	}
+    }
+}
+
+void State::NotifyOutputs(ConnPoint* aOutput)
+{
+    int cnt = aOutput->Required().size();
+    mOutputsNotified = false;
+    for (auto& iobs : aOutput->Required()) {
+	mNotifUnconfirmed.insert(iobs.second);
+	if (--cnt == 0) {
+	    mOutputsNotified = true;
+	}
+	DoNotifyOutput(iobs.second);
     }
 }

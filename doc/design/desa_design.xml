@@ -223,13 +223,15 @@
 		<listitem>Confirm</listitem>
 		<listitem>OnActivatedHandled - responce from owner on OnCompActivated</listitem>
 	    </itemizedlist>
-	    <simpara>Destination element - element that receives state's data. API supports horisontal signals.</simpara>
+	    <simpara>Provider interface of state - provides the data for another state. API supports horisontal signals.</simpara>
 	    <itemizedlist>
-		<listitem>OnSourceChanged - when source is changed (i.e. inputs)</listitem>
+		<listitem>OnChangedHandled() - confirmation on OnSourceChanged from dependant</listitem>
+		<listitem>GetData() - request of getting states data</listitem>
 	    </itemizedlist>
-	    <simpara>Source element - state that provides the data for another state. API supports horisontal signals.</simpara>
+	    <simpara>Consumer interface of state - receives state's data. API supports horisontal signals.</simpara>
 	    <itemizedlist>
-		<listitem>OnChangedHandled - confirmation on OnSourceChanged from dependant</listitem>
+		<listitem>OnSourceChanged() notification- when provider data is changed (i.e. inputs)</listitem>
+		<listitem>ReceiveData() - request of receiving data from provider</listitem>
 	    </itemizedlist>
 	    <simpara>Owning element in hierarchy. API supports ascending signals.</simpara>
 	    <itemizedlist>
@@ -238,9 +240,15 @@
 		<listitem>OnCompConfirmed - when compoments completes its confirm</listitem>
 	    </itemizedlist>
 	    <simpara>See the diagram below outlining the APIs</simpara>
-	    <figure id="fig_puca"><title>Proposed DES update cycle asynchronous - APIs</title><imageobject>
-		    <imagedata fileref="pics/desa_cycle_clsd.jpg"/> </imageobject></figure>
-	    <simpara>The cycle is:</simpara>
+	    <figure id="fig_puca"><title>Proposed DES update cycle asynchronous  - APIs</title><imageobject>
+		    <imagedata fileref="pics/desa_cycle_async_clsd.jpg"/> </imageobject></figure>
+	    <simpara>The cycle is (simplified diagram):</simpara>
+	    <figure id="fig_desa_cycle_async_s_icd"><title>Proposed DES update cycle (simplified) - APIs</title><imageobject>
+		    <imagedata fileref="pics/desa_cycle_async_s_icd.jpg"/> </imageobject></figure>
+	    <simplified>On the diagram State2 is dependent from State1. So State2 input is connected to State1 output. State2
+		buffers the sign of activation on confirmation phase (on OnSourceChanged signal). On update phase State2 requests
+		data from State1.</simplified>
+	    <simpara>The full cycle is:</simpara>
 	    <orderedlist>
 		<listitem>On system creation the system and all it's subsystems and states are marked as active. This is done in base class
 		    constructor.</listitem>
@@ -340,7 +348,7 @@
 	</sect2>
     </sect1>
 
-    <sect1 id="ds_ssci"><title>Using syncronization scheme with state vector cached in inputs</title>
+    <sect1 id="ds_ssbi"><title>Using syncronization scheme with state vector buffered in inputs (Input level buffering, IB)</title>
 	<sect2><title>Intro</title>
 	    <simpara>Currently after each cycle of system synchronization the overall state
 		vector is kept in outputs of states. This approach is convenient because it
@@ -365,6 +373,23 @@
 		    unchanged outputs but refresh the data by the request from changed outputs.
 		</simpara>
 	    </sect3>
+	</sect2>
+	<sect2 id="ds_ssbi_pd"><title>Proposed design</title>
+	    <simpara>The class diagram is shown below:</simpara>
+	    <figure id="fig_ssbi_ps_clsd"><title>Proposed DES update cycle asynchronous with data input buffering. Class diagram.
+		    </title><imageobject>
+		    <imagedata fileref="pics/desa_cycle_async_ib_clsd.jpg"/> </imageobject></figure>
+	    <simpara>Interactions scheme in case of input level data buffering is as:</simpara>
+	    <figure id="fig_desa_cycle_async_ib_s_icd"><title>DES cycle for input buffering (simplified) - APIs</title><imageobject>
+		    <imagedata fileref="pics/desa_cycle_async_ib_s_icd.jpg"/> </imageobject></figure>
+	    <simpara>On the diagram State2 is dependent from State1. So State2 input is connected to State1 output. State2
+		buffers the data from State1 on confirmation phase (on ReceiveData signal). So on update phase State2 doesn't
+		need interaction to State1.</simpara>
+	    <simpara>Compare IB variant to the initial variant without data buffering, ref <xref linkend="fig_desa_cycle_async_s_icd"/>.
+		We see that data buffering variant needs only one interaction State1 to State2 during the cycle. This is because
+		State2 gets activation sign via receiving signal ReceiveData from State1. So from interaction point of view
+		IB variant is more effective.</simpara>
+	    <simpara></simpara>
 	</sect2>
     </sect1>
 

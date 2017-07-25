@@ -24,7 +24,13 @@ namespace desa {
 	    // From MConnPoint
 	    virtual TDir Dir() const { return mDir;};
 	    virtual bool Connect(const MConnPoint& aCp);
+	    virtual bool Disconnect(const MConnPoint& aCp);
 	    virtual bool IsCompatible(const MConnPoint& aPair, bool aExtd = false) const;
+	    virtual void OnPairChanged(MConnPoint* aPair);
+	protected:
+	    virtual bool DoConnect(const MConnPoint& aCp);
+	    virtual bool DoDisconnect(const MConnPoint& aCp);
+	    void Notify(MConnPoint* aExclude = NULL);
 	protected:
 	    TDir mDir;
 	    TPairs mPairs;
@@ -38,20 +44,23 @@ namespace desa {
      */
     class ConnPoint: public ConnPointBase
     {
-	typedef std::vector<MIface*> TIfaces;
+	typedef map<const MConnPoint*, MIface*> TPairsIfaces;
+	typedef pair<const MConnPoint*, MIface*> TPairsIfacesElem;
 
 	public:
-	    ConnPoint(const string& aName, TDir aDir, MIface& aProvided);
-	    virtual MIface& Provided() { return mProvided;};
-	    virtual const MIface& Provided() const { return mProvided;};
-	    virtual TIfaces& Required() { return mRequired;}; 
-	    virtual const TIfaces& Required() const { return mRequired;}; 
+	    ConnPoint(const string& aName, TDir aDir, MIface* aProvided = NULL);
+	    virtual MIface& Provided() { return *mProvided;};
+	    virtual const MIface& Provided() const { return *mProvided;};
+	    virtual TPairsIfaces& Required() { return mRequired;}; 
+	    virtual const TPairsIfaces& Required() const { return mRequired;}; 
 	    // From MConnPoint
 	    virtual bool Connect(const MConnPoint& aCp);
+	    virtual bool Disconnect(const MConnPoint& aCp);
 	    virtual bool IsCompatible(const MConnPoint& aPair, bool aExtd = false) const;
+	    virtual void OnPairChanged(MConnPoint* aPair);
 	protected:
-	    MIface& mProvided;
-	    TIfaces mRequired;
+	    MIface* mProvided;
+	    TPairsIfaces mRequired;
     };
 
     /**
@@ -60,11 +69,11 @@ namespace desa {
     class ConnPointP: public ConnPointBase
     {
 	public:
-	    ConnPointP(const string& aName, TDir aDir, MIface& aProvided);
-	    virtual MIface& Provided() { return mProvided;};
-	    virtual const MIface& Provided() const { return mProvided;};
+	    ConnPointP(const string& aName, TDir aDir, MIface* aProvided);
+	    virtual MIface& Provided() { return *mProvided;};
+	    virtual const MIface& Provided() const { return *mProvided;};
 	protected:
-	    MIface& mProvided;
+	    MIface* mProvided;
     };
 
 
@@ -76,7 +85,7 @@ namespace desa {
 
 	public:
 //	    TConnPoint(const string& aName, TDir aDir, MIface& aProvided): ConnPoint(aName, aDir, aProvided) {};
-	    TConnPoint(const string& aName, TDir aDir, TProvided& aProvided): ConnPoint(aName, aDir, aProvided) {};
+	    TConnPoint(const string& aName, TDir aDir, TProvided* aProvided = NULL): ConnPoint(aName, aDir, aProvided) {};
 	    // From MConnPoint
 	    virtual bool IsCompatible(const MConnPoint& aPair, bool aExtd = false) const;
     };
@@ -85,11 +94,15 @@ namespace desa {
 	bool TConnPoint<_Provided, _Required>::IsCompatible(const MConnPoint& aPair, bool aExtd) const {
 	    bool res = ConnPoint::IsCompatible(aPair, aExtd);
 	    if (res) {
+		/*
 		const ConnPoint* cp = dynamic_cast<const ConnPoint*>(&aPair);
 		if (cp != NULL) {
 		    const TRequired* req = cp->Provided();
 		    res = req != NULL;
 		}
+		*/
+		const TConnPoint<TRequired, TProvided>* cp = dynamic_cast<const TConnPoint<TRequired, TProvided>*>(&aPair);
+		res = (cp != NULL);
 	    }
 	    return res;
 	}
@@ -101,7 +114,7 @@ namespace desa {
 	typedef _Provided TProvided;
 
 	public:
-	TConnPointP(const string& aName, TDir aDir, MIface& aProvided): ConnPoint(aName, aDir, aProvided) {};
+	TConnPointP(const string& aName, TDir aDir, MIface* aProvided): ConnPoint(aName, aDir, aProvided) {};
 	// From MConnPoint
 	    virtual bool IsCompatible(const MConnPoint& aPair, bool aExtd = false) const;
     };
@@ -116,6 +129,48 @@ namespace desa {
 
     inline bool Connect(MConnPoint& aCp1, MConnPoint& aCp2) { return aCp1.Connect(aCp2) && aCp2.Connect(aCp1); }
 
+    inline bool Disconnect(MConnPoint& aCp1, MConnPoint& aCp2) { return aCp1.Disconnect(aCp2) && aCp2.Disconnect(aCp1); }
+
+    /**
+     * @brief Connection point for state input
+     *
+     * Actually it doesn't represent some role of state - state delegates the role
+     * to input. This role is to get the input data setter. 
+     * So input is ConnPoint that provides role MStateObserver and this role is 
+     * implemented by input itself 
+     */
+    template<typename T> class StateInput: public TConnPoint<MStateObserver<T>, MStateNotifier>, public MStateObserver<T>
+    {
+	public:
+	    typedef pair<const MIface*, T> TDataElem;
+	    typedef map<const MIface*, T> TData;
+	public:
+	    StateInput(const string& aName, MInputObserver& aObserver):
+		TConnPoint<MStateObserver<T>, MStateNotifier>(aName, MConnPoint::EInput, this),
+		mObserver(aObserver) {};
+	    const TData& Data() { return mData;};
+	    // From MStateObserver
+	    virtual void OnStateChanged(MIface* aSource, const T& aData) {
+		if (mData.count(aSource) == 0) {
+		    mData.insert(TDataElem(aSource, aData));
+		} else { mData.at(aSource) = aData; }
+		mObserver.OnInputChanged();
+		MStateNotifier* intf = *aSource;
+		intf->OnStateChangeHandled(this);
+	    };
+	protected:
+	    TData mData;
+	    MInputObserver& mObserver;
+    };
+
+    template<typename T> class StateOutput: public TConnPoint<MStateNotifier, MStateObserver<T>>
+    {
+	public:
+	    StateOutput(const string& aName, MStateNotifier& aNotifier):
+		TConnPoint<MStateNotifier, MStateObserver<T>>(aName, aNotifier) {};
+    };
+
+
     /**
      * @brief Extention base
      *
@@ -127,12 +182,14 @@ namespace desa {
     class Extention: public ConnPointBase
     {
 	public:
-	    Extention(const string& aName, TDir aDir, ConnPointBase* aSrc): ConnPointBase(aName, aDir), mSrc(aSrc) {};
+	    Extention(const string& aName, TDir aDir, ConnPointBase* aOrig): ConnPointBase(aName, aDir), mOrig(aOrig) {};
 	    virtual ~Extention();
+	    ConnPointBase& Orig() { return *mOrig; };
+	    const ConnPointBase& Orig() const { return *mOrig; };
 	    // From MConnPoint
 	    virtual bool IsCompatible(const MConnPoint& aPair, bool aExtd = false) const;
 	protected:
-	    ConnPointBase* mSrc; // Source conn point that is represented by extention, owned
+	    ConnPointBase* mOrig; // Original conn point that is represented by extention, owned
     };
 
 
@@ -152,35 +209,28 @@ namespace desa {
     };
 
     /**
-     * @brief Connection point for state input
-     *
-     * Actually it doesn't represent some role of state - state delegates the role
-     * to input. This role is to get the input data setter. 
-     * So input is ConnPoint that provides role MDataSetter and this role is 
-     * implemented by input itself 
+     * @brief Extention of StateInput
      */
-    template<typename T>
-    class StateInput: public TConnPointP<MDataSetter<T>>, public MDataSetter<T>
+    template<typename T> class ExtStateInp: public Extention
     {
 	public:
-	    typedef pair<const MIface*, T> TDataElem;
-	    typedef map<const MIface*, T> TData;
-	public:
-	    StateInput(const string& aName, MStateObserver& aObserver):
-		TConnPointP<MDataSetter<T>>(aName, MConnPoint::EInput, *this),
-		mObserver(aObserver) {};
-	    const TData& Data() { return mData;};
-	    // From MDataSetter
-	    virtual void Set(const MIface* aSource, const T& aData) {
-		if (mData.count(aSource) == 0) {
-		    mData.insert(TDataElem(aSource, aData));
-		} else { mData.at(aSource) = aData; }
-		mObserver.OnSourceChanged();
-	    };
-	protected:
-	    TData mData;
-	    MStateObserver& mObserver;
+	    ExtStateInp(const string& aName): Extention(aName, EInput,
+		    new TConnPoint<MStateNotifier, MStateObserver<T>>("Int", EOutput)) {
+	    }
     };
+
+    /**
+     * @brief Extention of StateOutput
+     */
+    template<typename T> class ExtStateOut: public Extention
+    {
+	public:
+	    ExtStateOut(const string& aName): Extention(aName, EOutput,
+		    mOrig = new TConnPoint<MStateObserver<T>, MStateNotifier>("Int", EInput)) {
+			    }
+    };
+
+
 
 } // namespace desa
 

@@ -7,7 +7,7 @@ ut_desa_lib_SOURCES = \
 		       ut_base.cpp
 
 ut_desa_lib_LDFLAGS=-L../src/.libs/ -ldesa  -lcppunit -lrt
-ut_desa_lib_CXXFLAGS=-I@srcdir@/../src
+ut_desa_lib_CXXFLAGS=-I@srcdir@/../src -pthread
 
 check: test_desa_lib
 

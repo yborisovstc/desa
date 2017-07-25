@@ -35,14 +35,15 @@ void System::HandleCompUpdated(MComp* aComp)
     assert(mState == ESt_UpdateRequesing || mState == ESt_Updating);
     string::size_type ret = mRequested.erase(aComp);
     assert(ret == 1);
-    if (mRequested.empty()) {
+    if (mAllCompsUpdated && mRequested.empty()) {
 	bool updating = (mState == ESt_Updating);
 	mState = ESt_Updated;
 	if (mOwner != NULL) {
 	    mOwner->OnCompUpdated(this);
 	} else if (updating) {
-	    Confirm();
+	    //Confirm();
 	}
+	mRq.unlock();
     }
 }
 
@@ -51,14 +52,15 @@ void System::HandleCompConfirmed(MComp* aComp)
     assert(mState == ESt_ConfirmRequesting || mState == ESt_Confirming);
     string::size_type ret = mRequested.erase(aComp);
     assert(ret == 1);
-    if (mRequested.empty()) {
+    if (mAllCompsConfirmed && mRequested.empty()) {
 	bool confirming = (mState == ESt_Confirming);
 	mState = ESt_Confirmed;
 	if (mOwner != NULL) {
 	    mOwner->OnCompConfirmed(this);
 	} else if (confirming) {
-	    Update();
+	    //Update();
 	}
+	mRq.unlock();
     }
 
 }
@@ -68,9 +70,13 @@ void System::Update()
     if (mState == ESt_Unknown || mState == ESt_Confirmed) {
 	mState = ESt_UpdateRequesing;
     }
+    assert(mRequested.empty());
     pair<set<MComp*>::iterator,bool> ret;
+    mAllCompsUpdated = false;
+    int cnt = mStatusCur->size();
     for (MComp* comp: *mStatusCur) {
 	ret = mRequested.insert(comp);
+	mAllCompsUpdated = (--cnt == 0);
 	assert(ret.second);
 	comp->Update();
     }
@@ -86,9 +92,13 @@ void System::Confirm()
 	mState = ESt_ConfirmRequesting;
     }
     // Comps can notify of status change during confirm, the status is collected for next step.
+    assert(mRequested.empty());
     pair<set<MComp*>::iterator,bool> ret;
+    mAllCompsConfirmed = false;
+    int cnt = mStatusCur->size();
     for (MComp* comp: *mStatusCur) {
 	ret = mRequested.insert(comp);
+	mAllCompsConfirmed = (--cnt == 0);
 	assert(ret.second);
 	comp->Confirm();
     }
@@ -114,10 +124,22 @@ void System::Run()
 {
     assert(mOwner == NULL);
     while (mIsActive) {
-	Update();
-	if (mState == ESt_Updated) {
-	    Confirm();
+	mRq.lock();
+	Confirm();
+	/*
+	if (mState != ESt_Confirmed) {
+	    // If state isn't Confirmed this means that acks from components are not collected in the frame of Confirm
+	    // So running the system will be continued on ack from comp.
+	    break;
 	}
+	*/
+	mRq.lock();
+	Update();
+	/*
+	if (mState != ESt_Updated) {
+	    break;
+	}
+	*/
     }
 }
 

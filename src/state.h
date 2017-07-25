@@ -4,6 +4,7 @@
 #include "mdes.h"
 #include "connpoint.h"
 #include <vector>
+#include <set>
 
 namespace desa {
 
@@ -16,17 +17,28 @@ namespace desa {
      */
     class State: public Comp
     {
-	friend class StateObserver;
+	public:
+	    typedef set<MIface*> TIfSet; // Set of ifaces
+
+	friend class InputObserver;
+	friend class StateNotifier; 
 	protected:
-	    class StateObserver: public MStateObserver
-	{
+	    class InputObserver: public MInputObserver {
 	    public:
-		StateObserver(State& aHost): mHost(aHost) {};
+		InputObserver(State& aHost): mHost(aHost) {};
 		// From MStateObserver
-		virtual void OnSourceChanged() { mHost.HandleSourceChanged();};
+		virtual void OnInputChanged() { mHost.HandleInputChanged();};
 	    private:
 		State& mHost;
 	};
+	    class StateNotifier: public MStateNotifier {
+		public:
+		    StateNotifier(State& aHost): mHost(aHost) {};
+		    // From MStateNotifier
+		    virtual void OnStateChangeHandled(MIface* aObserver) { mHost.HandleStateChangeHandled(aObserver);};
+		private:
+		    State& mHost;
+	    };
 	public:
 	    State(const string& aName);
 	    State(const string& aName, MOwner* aOwner);
@@ -43,12 +55,19 @@ namespace desa {
 	    virtual void* Conf() { return NULL;};
 	    virtual void* Upd() { return NULL;};
 	    virtual int Len() const { return 0;};
-	    void HandleSourceChanged();
+	    virtual void NotifyOutputs(ConnPoint* aOutput);
+	    void HandleInputChanged();
+	    void HandleStateChangeHandled(MIface* aObserver);
+	    virtual void DoNotifyOutput(MIface* aObserver) = 0;
 	protected:
-	    StateObserver mSobs;
+	    InputObserver mSobs;
+	    StateNotifier mSntf;
 	    vector<ConnPoint*> mInputs;
 	    ConnPointBase* mOutput;
 	    bool mIsActive;
+	    bool mUninit; // Sign of state is not initialized yet
+	    TIfSet mNotifUnconfirmed; // Set of notifiers not yet confirmed notification
+	    bool mOutputsNotified;
     };
 
 
@@ -70,7 +89,7 @@ namespace desa {
 	public:
 	    TState(const string& aName, MOwner* aOwner, const T& aData):
 		State(aName, aOwner), mConf(aData), mUpd(aData), mData(*this) {
-		    mOutput = new TConnPointP<MData<T>>("Out", MConnPoint::EOutput, mData);
+		    mOutput = new TConnPoint<MStateNotifier, MStateObserver<T>>("Out", MConnPoint::EOutput, mSntf);
 		};
 	    virtual ~TState() {};
 	    inline operator const T&() const { return mConf;};
@@ -78,6 +97,24 @@ namespace desa {
 	    virtual void* Conf() { return &mConf;};
 	    virtual void* Upd() {return &mUpd;};
 	    virtual int Len() const { return sizeof(T); };
+	    /*
+	    virtual void NotifyOutputs(ConnPoint* aOutput) {
+		int cnt = aOutput->Required().size();
+		mOutputsNotified = false;
+		for (auto& iobs : aOutput->Required()) {
+		    mNotifUnconfirmed.insert(iobs.second);
+		    if (--cnt == 0) {
+			mOutputsNotified = true;
+		    }
+		    MStateObserver<T>* obs = *iobs.second;
+		    obs->OnStateChanged(&mSntf, mConf);
+		}
+	    };
+	    */
+	    virtual void DoNotifyOutput(MIface* aObserver) {
+		MStateObserver<T>* obs = *aObserver;
+		obs->OnStateChanged(&mSntf, mConf);
+	    };
 	protected:
 	    TData mData;
 	    T mConf; // Confirmed data

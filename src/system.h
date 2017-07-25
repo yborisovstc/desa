@@ -6,6 +6,7 @@
 #include  <vector>
 #include  <map>
 #include  <set>
+#include  <mutex>
 
 namespace desa {
 
@@ -68,6 +69,9 @@ namespace desa {
 	    TActives* mStatusNext; // Component's status on the next step
 	    TCompsSet mRequested; // Components requested for update/confirm
 	    TState mState; // DES state
+	    bool mAllCompsConfirmed;
+	    bool mAllCompsUpdated;
+	    mutex mRq;
     };
 
 

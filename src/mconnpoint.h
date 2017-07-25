@@ -15,7 +15,9 @@ namespace desa {
 	public:
 	    virtual TDir Dir() const = 0;
 	    virtual bool Connect(const MConnPoint& aCp) = 0;
+	    virtual bool Disconnect(const MConnPoint& aCp) = 0;
 	    virtual bool IsCompatible(const MConnPoint& aPair, bool aExtd = false) const = 0;
+	    virtual void OnPairChanged(MConnPoint* aPair) = 0;
     };
 
 } // namespace desa

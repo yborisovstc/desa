@@ -58,10 +58,10 @@ namespace desa {
      *
      * Normally observable is state connected to input
      */
-    class MStateObserver: public MIface
+    template<typename T> class MStateObserver: public MIface
     {
 	public:
-	    virtual void OnSourceChanged() = 0;
+	    virtual void OnStateChanged(MIface* aSource, const T& aStateData) = 0;
 
     };
 
@@ -75,6 +75,18 @@ namespace desa {
     {
 	public:
 	    virtual void Set(const MIface* aSource, const T& aData) = 0;
+    };
+
+    class MStateNotifier: public MIface
+    {
+	public:
+	    virtual void OnStateChangeHandled(MIface* aObserver) = 0;
+    };
+
+    class MInputObserver
+    {
+	public:
+	    virtual void OnInputChanged() = 0;
     };
 
     /**
