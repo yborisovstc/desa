@@ -30,10 +30,8 @@ namespace desa {
 	enum TState {
 	    ESt_Unknown = 0,
 	    ESt_UpdateRequesing,
-	    ESt_Updating,
 	    ESt_Updated,
 	    ESt_ConfirmRequesting,
-	    ESt_Confirming,
 	    ESt_Confirmed
 	};
 	protected:

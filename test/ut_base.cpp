@@ -13,10 +13,10 @@ using namespace desa;
 class Ut_Base : public CPPUNIT_NS::TestFixture
 {
     CPPUNIT_TEST_SUITE(Ut_Base);
-//    CPPUNIT_TEST(test_Cre);
-//    CPPUNIT_TEST(test_Incr);
-//    CPPUNIT_TEST(test_Syst1);
-//    CPPUNIT_TEST(test_Extention1);
+    CPPUNIT_TEST(test_Cre);
+    CPPUNIT_TEST(test_Incr);
+    CPPUNIT_TEST(test_Syst1);
+    CPPUNIT_TEST(test_Extention1);
     CPPUNIT_TEST(test_Async1);
     CPPUNIT_TEST_SUITE_END();
 public:
@@ -174,20 +174,23 @@ void Ut_Base::test_Extention1()
  * @brief Test of system's states async interacting 
  * There are system with two states:
  * first is incrementor, i.e. state adding some input value to the states value
- * second is the evnts generator of input value for incrementor. Ths state is async to the incrementor
+ * second is the events generator of input value for incrementor. This state is async to the incrementor
  */
 
 class EventsGenerator: public TState<int>
 {
     public:
-	EventsGenerator(const int& aData, MOwner* aOwner = NULL): TState<int>("Evg", aOwner, aData), mInp("Inp", mSobs) {};
+	EventsGenerator(const int& aData, MOwner* aOwner = NULL):
+	    TState<int>("Evg", aOwner, aData), mInp("Inp", mSobs), mInpCount("InpCount", mSobs) {};
 	ConnPointBase& Input() { return mInp;};
+	ConnPointBase& InpCount() { return mInpCount;};
 	virtual void Update();
 	virtual void Confirm();
     private:
 	void DoUpdate();
     private:
 	StateInput<int> mInp;
+	StateInput<int> mInpCount;
 };
 
 void Pause(int aDelay) {
@@ -204,23 +207,24 @@ void EventsGenerator::DoUpdate()
 void EventsGenerator::Update() {
     assert(mInp.Data().size() == 1);
     int data = mInp.Data().begin()->second;
-    cout << "EventsGenerator::Update, data: " << data << endl;
-    if (data == 1) {
-	mUpd = 0;
-	State::Update();
+    int count = mInpCount.Data().begin()->second;
+    cout << "EventsGenerator::Update, data: " << data << ", count: " << count << endl;
+    if (count < 4) {
+	if (data == 1) {
+	    mUpd = 0;
+	    State::Update();
+	} else {
+	    thread tt(&EventsGenerator::DoUpdate, this);
+	    tt.detach();
+	}
     } else {
-	//thread tt(Pause, 1);
-	thread tt(&EventsGenerator::DoUpdate, this);
-	tt.detach();
-	//tt.join();
-	//mUpd = 1;
+	State::Update();
     }
-   // State::Update();
 };
 
 void EventsGenerator::Confirm()
 {
-    cout << "EventsGenerator::Confirm" << endl;
+    //cout << "EventsGenerator::Confirm" << endl;
     State::Confirm();
 }
 
@@ -243,13 +247,13 @@ void Incr2::Update()
 	    mUpd += inp.second;
 	}
     }
-    cout << "Incr2::Update, " << mUpd << " -> " << mConf << endl;
+    //cout << "Incr2::Update, " << mUpd << " -> " << mConf << endl;
     State::Update();
 }
 
 void Incr2::Confirm()
 {
-    cout << "Incr2::Confirm" << endl;
+    //cout << "Incr2::Confirm" << endl;
     State::Confirm();
 }
 
@@ -273,6 +277,7 @@ Syst3::Syst3(const string& aName, MOwner* aOwner): System(aName, aOwner) {
     CPPUNIT_ASSERT_MESSAGE("Fail to connect incr inp to output", res);
     res = Connect(mEvg->Input(), mEvg->Output());
     res = Connect(mIncr->Input(), mEvg->Output());
+    res = Connect(mEvg->InpCount(), mIncr->Output());
     CPPUNIT_ASSERT_MESSAGE("Fail to connect incr inp to evg output", res);
     AddComp(mIncr);
     AddComp(mEvg);
@@ -280,13 +285,13 @@ Syst3::Syst3(const string& aName, MOwner* aOwner): System(aName, aOwner) {
 
 void Syst3::Update()
 {
-    cout << "Syst3::Update" << endl;
+    //cout << "Syst3::Update" << endl;
     System::Update();
 }
 
 void Syst3::Confirm()
 {
-    cout << "Syst3::Confirm" << endl;
+    //cout << "Syst3::Confirm" << endl;
     System::Confirm();
 }
 

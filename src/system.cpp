@@ -32,16 +32,13 @@ void System::HandleCompActivated(MComp* aComp)
 
 void System::HandleCompUpdated(MComp* aComp)
 {
-    assert(mState == ESt_UpdateRequesing || mState == ESt_Updating);
+    assert(mState == ESt_UpdateRequesing);
     string::size_type ret = mRequested.erase(aComp);
     assert(ret == 1);
     if (mAllCompsUpdated && mRequested.empty()) {
-	bool updating = (mState == ESt_Updating);
 	mState = ESt_Updated;
 	if (mOwner != NULL) {
 	    mOwner->OnCompUpdated(this);
-	} else if (updating) {
-	    //Confirm();
 	}
 	mRq.unlock();
     }
@@ -49,16 +46,13 @@ void System::HandleCompUpdated(MComp* aComp)
 
 void System::HandleCompConfirmed(MComp* aComp)
 {
-    assert(mState == ESt_ConfirmRequesting || mState == ESt_Confirming);
+    assert(mState == ESt_ConfirmRequesting);
     string::size_type ret = mRequested.erase(aComp);
     assert(ret == 1);
     if (mAllCompsConfirmed && mRequested.empty()) {
-	bool confirming = (mState == ESt_Confirming);
 	mState = ESt_Confirmed;
 	if (mOwner != NULL) {
 	    mOwner->OnCompConfirmed(this);
-	} else if (confirming) {
-	    //Update();
 	}
 	mRq.unlock();
     }
@@ -79,9 +73,6 @@ void System::Update()
 	mAllCompsUpdated = (--cnt == 0);
 	assert(ret.second);
 	comp->Update();
-    }
-    if (mState == ESt_UpdateRequesing) {
-	mState = ESt_Updating;
     }
 }
 
@@ -107,9 +98,6 @@ void System::Confirm()
     mStatusCur = mStatusNext;
     mStatusNext = cur;
     mStatusNext->clear();
-    if (mState == ESt_ConfirmRequesting) {
-	mState = ESt_Confirming;
-    }
 }
 
 void System::AddComp(Comp* aComp)
@@ -124,22 +112,10 @@ void System::Run()
 {
     assert(mOwner == NULL);
     while (mIsActive) {
-	mRq.lock();
+	mRq.lock(); // Waiting for previous cycle to be completed (update)
 	Confirm();
-	/*
-	if (mState != ESt_Confirmed) {
-	    // If state isn't Confirmed this means that acks from components are not collected in the frame of Confirm
-	    // So running the system will be continued on ack from comp.
-	    break;
-	}
-	*/
-	mRq.lock();
+	mRq.lock(); // Waiting for current cycle confirmation phase to be completed
 	Update();
-	/*
-	if (mState != ESt_Updated) {
-	    break;
-	}
-	*/
     }
 }
 
