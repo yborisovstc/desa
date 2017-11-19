@@ -1,7 +1,9 @@
 #include "connpoint.h"
 #include <assert.h>
+#include <iostream>
 
 using namespace desa;
+using namespace std;
 
 ConnPointBase::ConnPointBase(const string& aName, MConnPoint::TDir aDir):
     MBase(aName), mDir(aDir)
@@ -74,6 +76,19 @@ void ConnPointBase::OnPairChanged(MConnPoint* aPair)
 {
 }
 
+bool ConnPointBase::IsConnected() const
+{
+    return !mPairs.empty();
+}
+
+void ConnPointBase::Dump() const
+{
+    cout << "ConnPointBase [" << Name() << "]" << endl;
+    cout << "Dir: " << ((mDir == EInput)?"Inp":"Out") << endl;
+    cout << "Pairs: ";
+    for (auto& pair: mPairs) { cout << pair << ", ";}; cout << endl;
+
+}
 
 // ConnPoint providing/requiring
 
@@ -86,14 +101,29 @@ bool ConnPoint::Connect(const MConnPoint& aCp)
 {
     bool res =  ConnPointBase::DoConnect(aCp);
     if (res) {
-	const ConnPoint* ccp = dynamic_cast<const ConnPoint*>(&aCp);
-	ConnPoint* cp = const_cast<ConnPoint*>(ccp);
-	if (cp != NULL) {
-	    if (&cp->Provided() != NULL) {
-		mRequired.insert(TPairsIfacesElem(&aCp, &cp->Provided()));	
+	const Extention* ext = dynamic_cast<const Extention*>(&aCp);
+	if (ext != NULL) {
+	    const MConnPoint& mpair = ext->Orig();
+	    const ConnPoint* ccp = dynamic_cast<const ConnPoint*>(&mpair);
+	    ConnPoint* cp = const_cast<ConnPoint*>(ccp);
+	    if (cp != NULL) {
+		const TPairsIfaces& requireds = cp->Required();
+		for (auto& rq : requireds) {
+		    mRequired.insert(rq);
+		}
+	    } else {
+		res = false;
 	    }
 	} else {
-	    res = false;
+	    const ConnPoint* ccp = dynamic_cast<const ConnPoint*>(&aCp);
+	    ConnPoint* cp = const_cast<ConnPoint*>(ccp);
+	    if (cp != NULL) {
+		if (&cp->Provided() != NULL) {
+		    mRequired.insert(TPairsIfacesElem(&aCp, &cp->Provided()));
+		}
+	    } else {
+		res = false;
+	    }
 	}
 	MConnPoint* mcp = const_cast<MConnPoint*>(&aCp);
 	Notify(mcp);
@@ -131,6 +161,16 @@ void ConnPoint::OnPairChanged(MConnPoint* aPair)
     DoConnect(*aPair);
     Notify(aPair);
 }
+
+void ConnPoint::Dump() const
+{
+    ConnPointBase::Dump();
+    cout << "ConnPoint [" << Name() << "]" << endl;
+    cout << "Provided: " << mProvided << endl;
+    cout << "Required: "; for (auto& elem: mRequired) { cout << "[" << elem.first << "-" << elem.second << "] ";}; cout << endl;
+}
+
+
 
 // ConnPoint providing only
 

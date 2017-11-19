@@ -52,6 +52,7 @@ namespace desa {
 	    virtual void Update();
 	    virtual void Confirm();
 	protected:
+	    virtual void Trans() {};
 	    virtual void* Conf() { return NULL;};
 	    virtual void* Upd() { return NULL;};
 	    virtual int Len() const { return 0;};
@@ -59,6 +60,9 @@ namespace desa {
 	    void HandleInputChanged();
 	    void HandleStateChangeHandled(MIface* aObserver);
 	    virtual void DoNotifyOutput(MIface* aObserver) = 0;
+	    inline void NotifyCompConfirmed();
+	    inline void NotifyCompActivated();
+	    inline void NotifyCompUpdated();
 	protected:
 	    InputObserver mSobs;
 	    StateNotifier mSntf;
@@ -69,6 +73,27 @@ namespace desa {
 	    TIfSet mNotifUnconfirmed; // Set of notifiers not yet confirmed notification
 	    bool mOutputsNotified;
     };
+
+    inline void State::NotifyCompActivated()
+    {
+	if (mOwner != NULL) {
+	    mOwner->OnCompActivated(this);
+	}
+    }
+
+    inline void State::NotifyCompConfirmed()
+    {
+	if (mOwner != NULL) {
+	    mOwner->OnCompConfirmed(this);
+	}
+    }
+
+    inline void State::NotifyCompUpdated()
+    {
+	if (mOwner != NULL) {
+	    mOwner->OnCompUpdated(this);
+	}
+    }
 
 
     /**

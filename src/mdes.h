@@ -17,7 +17,7 @@ namespace desa {
 	public:
 	    MBase(const string& aName): mName(aName) {};
 	    virtual ~MBase() {};
-	    virtual const std::string& Name() { return mName;};
+	    virtual const std::string& Name() const { return mName;};
 	protected:
 	    string mName;
     };

@@ -27,14 +27,38 @@ namespace desa {
 	    virtual bool Disconnect(const MConnPoint& aCp);
 	    virtual bool IsCompatible(const MConnPoint& aPair, bool aExtd = false) const;
 	    virtual void OnPairChanged(MConnPoint* aPair);
+	    virtual bool IsConnected() const override;
 	protected:
 	    virtual bool DoConnect(const MConnPoint& aCp);
 	    virtual bool DoDisconnect(const MConnPoint& aCp);
 	    void Notify(MConnPoint* aExclude = NULL);
+	    virtual void Dump() const;
 	protected:
 	    TDir mDir;
 	    TPairs mPairs;
     };
+
+    /**
+     * @brief Extention base
+     *
+     * This connection point allows to extend another connection point, for instance system's internal state
+     * output to the system output.
+     *
+     */
+    // TODO [YB] To desing templated Extention
+    class Extention: public ConnPointBase
+    {
+	public:
+	    Extention(const string& aName, TDir aDir, ConnPointBase* aOrig): ConnPointBase(aName, aDir), mOrig(aOrig) {};
+	    virtual ~Extention();
+	    ConnPointBase& Orig() { return *mOrig; };
+	    const ConnPointBase& Orig() const { return *mOrig; };
+	    // From MConnPoint
+	    virtual bool IsCompatible(const MConnPoint& aPair, bool aExtd = false) const;
+	protected:
+	    ConnPointBase* mOrig; // Original conn point that is represented by extention, owned
+    };
+
 
     /**
      * @brief Simple Connection Point
@@ -59,6 +83,8 @@ namespace desa {
 	    virtual bool IsCompatible(const MConnPoint& aPair, bool aExtd = false) const;
 	    virtual void OnPairChanged(MConnPoint* aPair);
 	protected:
+	    virtual void Dump() const override;
+	protected:
 	    MIface* mProvided;
 	    TPairsIfaces mRequired;
     };
@@ -77,6 +103,11 @@ namespace desa {
     };
 
 
+    /**
+     * @brief Templated connection point with types of provided and required ifaces
+     *
+     */
+    // TODO YB Can we use templated iface for it
     template<typename _Provided, typename _Required>
     class TConnPoint: public ConnPoint
     {
@@ -101,8 +132,17 @@ namespace desa {
 		    res = req != NULL;
 		}
 		*/
-		const TConnPoint<TRequired, TProvided>* cp = dynamic_cast<const TConnPoint<TRequired, TProvided>*>(&aPair);
-		res = (cp != NULL);
+		// Checking if pair is extension
+		const Extention* ext = dynamic_cast<const Extention*>(&aPair);
+		const MConnPoint* pair = ext == NULL ? &aPair : &ext->Orig();
+		bool extd = aExtd ^ (ext != NULL);
+		if (extd) {
+		    const TConnPoint<TProvided, TRequired>* cp = dynamic_cast<const TConnPoint<TProvided, TRequired>*>(pair);
+		    res = cp != NULL;
+		} else {
+		    const TConnPoint<TRequired, TProvided>* cp = dynamic_cast<const TConnPoint<TRequired, TProvided>*>(pair);
+		    res = cp != NULL;
+		}
 	    }
 	    return res;
 	}
@@ -172,34 +212,14 @@ namespace desa {
 
 
     /**
-     * @brief Extention base
-     *
-     * This connection point allows to extend another connection point, for instance system's internal state
-     * output to the system output.
-     *
-     */
-    // TODO [YB] To desing templated Extention
-    class Extention: public ConnPointBase
-    {
-	public:
-	    Extention(const string& aName, TDir aDir, ConnPointBase* aOrig): ConnPointBase(aName, aDir), mOrig(aOrig) {};
-	    virtual ~Extention();
-	    ConnPointBase& Orig() { return *mOrig; };
-	    const ConnPointBase& Orig() const { return *mOrig; };
-	    // From MConnPoint
-	    virtual bool IsCompatible(const MConnPoint& aPair, bool aExtd = false) const;
-	protected:
-	    ConnPointBase* mOrig; // Original conn point that is represented by extention, owned
-    };
-
-
-    /**
      * @brief Extention of connection point TConnPoint
      *
      * This connection point allows to extend another connection point, for instance system's internal state
      * output to the system output.
      *
      */
+    // TODO [YB] Should extension implement templated connpoint iface? In that case the logic of compatibility and
+    // connection will become simple.
     template<typename _Provided, typename _Required>
     class  TConnPointExt: public Extention
     {
@@ -210,6 +230,7 @@ namespace desa {
 
     /**
      * @brief Extention of StateInput
+     * TODO [YB] To define via typedef as TConnPointExt<MStateNotifier, MStateObserver<T>>
      */
     template<typename T> class ExtStateInp: public Extention
     {

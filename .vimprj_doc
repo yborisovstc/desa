@@ -1,0 +1,9 @@
+desa_doc=/home/yborisov/projects/fap/desa/doc CD=. filter="*" {
+ requirements=requirements CD=. filter="*.xml Makefile" {
+  desa_req.xml
+  Makefile
+ }
+ design=design CD=. filter="*.xml Makefile" {
+  desa_design.xml
+ }
+}

@@ -1,3 +1,6 @@
+
+#include <iostream>
+
 #include "system.h"
 #include "state.h"
 #include <assert.h>
@@ -5,8 +8,9 @@
 
 using namespace desa;
 
+// Not active on init, to be activated via notif from comps
 System::System(const string& aName, MOwner* aOwner): Comp(aName, aOwner), mOwnerImpl(*this),
-    mIsActive(true), mState(ESt_Unknown)
+    mIsActive(false), mState(ESt_Unknown)
 {
     mStatusCur = &mStatus1;
     mStatusNext = &mStatus2;
@@ -74,11 +78,12 @@ void System::Update()
 	assert(ret.second);
 	comp->Update();
     }
+    // Update has been done, reset active flag now
+    mIsActive = false;
 }
 
 void System::Confirm()
 {
-    mIsActive = false;
     if (mState == ESt_Unknown || mState == ESt_Updated) {
 	mState = ESt_ConfirmRequesting;
     }
@@ -111,11 +116,35 @@ void System::AddComp(Comp* aComp)
 void System::Run()
 {
     assert(mOwner == NULL);
+    Confirm();
     while (mIsActive) {
-	mRq.lock(); // Waiting for previous cycle to be completed (update)
-	Confirm();
 	mRq.lock(); // Waiting for current cycle confirmation phase to be completed
 	Update();
+	mRq.lock(); // Waiting for previous cycle to be completed (update)
+	Confirm();
     }
 }
 
+void System::DumpComps() const
+{
+    cout << "[" << Name() << "]" << " components:" << endl;
+    for (auto &comp: mComps) {
+	cout << "Name: " << comp.second->Name() << endl;
+    }
+    cout << endl;
+}
+
+void System::DumpActives() const
+{
+    cout << "[" << Name() << "]" << " actives:" << endl;
+    cout << "Cur: ";
+    for (auto &comp: *mStatusCur) {
+	cout << "[" << dynamic_cast<Comp*>(comp)->Name() << "], ";
+    }
+    cout << endl;
+    cout << "Next: ";
+    for (auto &comp: *mStatusNext) {
+	cout << "[" << dynamic_cast<Comp*>(comp)->Name() << "], ";
+    }
+    cout << endl;
+}

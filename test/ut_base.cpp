@@ -17,6 +17,7 @@ class Ut_Base : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST(test_Incr);
     CPPUNIT_TEST(test_Syst1);
     CPPUNIT_TEST(test_Extention1);
+    CPPUNIT_TEST(test_Extention2);
     CPPUNIT_TEST(test_Async1);
     CPPUNIT_TEST_SUITE_END();
 public:
@@ -28,6 +29,7 @@ private:
     void test_Syst1();
     void test_Async1();
     void test_Extention1();
+    void test_Extention2();
 };
 
 CPPUNIT_TEST_SUITE_REGISTRATION( Ut_Base );
@@ -60,24 +62,31 @@ void Ut_Base::test_Cre()
 class IncrementorState: public TState<int>
 {
     public:
-	IncrementorState(const int& aData, MOwner* aOwner = NULL);
+	IncrementorState(const string& aName, const int& aData, MOwner* aOwner = NULL);
 	ConnPointBase& Input() { return mInp;};
 	virtual void Update();
+	void SetInc(int aInc) { mInc = aInc;}
+	void SetLim(int aLim) { mLim = aLim;}
     private:
 	StateInput<int> mInp;
+	int mInc;
+	int mLim;
 };
 
 
-IncrementorState::IncrementorState(const int& aData, MOwner* aOwner): TState<int>("Incr", aOwner, aData),
-    mInp("Inp", mSobs)
+IncrementorState::IncrementorState(const string& aName, const int& aData, MOwner* aOwner): TState<int>(aName, aOwner, aData),
+    mInp("Inp", mSobs), mInc(1), mLim(4)
 {
 }
 
 void IncrementorState::Update()
 {
+    mUpd = mInc;
     for (StateInput<int>::TDataElem inp: mInp.Data()) {
-	if (mUpd < 4) {
-	    mUpd = inp.second + 1;
+	mUpd += inp.second;
+	if (mUpd > mLim) {
+	    mUpd = mLim;
+	    break;
 	}
     }
     State::Update();
@@ -91,7 +100,7 @@ void Ut_Base::test_Incr()
 {
     printf("\n === Test of ruinning single state (Iterator)\n");
     int init_data = 0;
-    IncrementorState* state = new IncrementorState(init_data);
+    IncrementorState* state = new IncrementorState("Incr", init_data);
     bool res = Connect(state->Input(), state->Output());
     CPPUNIT_ASSERT_MESSAGE("Fail to connect inp to output", res);
     state->Run();
@@ -105,7 +114,7 @@ class Syst1: public System
     public:
 	Syst1(const string& aName, MOwner* aOwner): System(aName, aOwner) {
 	    int init_data = 0;
-	    mIncr = new IncrementorState(init_data, NULL);
+	    mIncr = new IncrementorState("Syst1_incr", init_data, NULL);
 	    bool res = Connect(mIncr->Input(), mIncr->Output());
 	    CPPUNIT_ASSERT_MESSAGE("Fail to connect inp to output", res);
 	    AddComp(mIncr);
@@ -295,8 +304,6 @@ void Syst3::Confirm()
     System::Confirm();
 }
 
-
-
 void Ut_Base::test_Async1()
 {
     printf("\n === Test of system states async interacting\n");
@@ -307,3 +314,50 @@ void Ut_Base::test_Async1()
 }
 
 
+
+
+/**
+ * @brief System containig two sybsystems.
+ *
+ * Checking connection via extentions
+ */
+class Syst4: public System
+{
+    public:
+	Syst4(const string& aName);
+    public:
+	IncrementorState* mIncr;
+	Syst2* mS1;
+	//Syst2* mS2;
+};
+
+Syst4::Syst4(const string& aName): System(aName, NULL)
+{
+    int init_data = 0;
+    AddComp(mIncr = new IncrementorState("Incr", init_data));
+    AddComp(mS1 = new Syst2("S1", NULL));
+    mS1->Incr().SetInc(0);
+    mS1->Incr().SetLim(100);
+    //AddComp(mS2 = new Syst2("S2", NULL));
+    bool res = Connect(mIncr->Input(), mIncr->Output());
+    res = res && Connect(mS1->Incr().Input(), mS1->Incr().Output());
+    res = res && Connect(mIncr->Output(), *mS1->mInp);
+    //res = res && Connect(*mS1->mOut, *mS2->mInp);
+    CPPUNIT_ASSERT_MESSAGE("Fail to connect incr inp to output", res);
+}
+
+
+/**
+ * @brief Simple test of extention
+ * State output to system input (extention)
+ * 
+ */
+void Ut_Base::test_Extention2()
+{
+    cout << endl <<  "=== Test of extentions, State output to system input (extention)" << endl;
+    Syst4 syst("Syst4");
+    syst.Run();
+    int data = syst.mS1->Incr();
+    cout << "data: " << data << endl;
+    //CPPUNIT_ASSERT_MESSAGE("Incorrect data", data == 4);
+}

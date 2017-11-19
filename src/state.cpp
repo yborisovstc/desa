@@ -5,11 +5,12 @@
 
 using namespace desa;
 
-State::State(const string& aName): Comp(aName), mSobs(*this), mSntf(*this), mOutput(NULL), mIsActive(true), mUninit(true)
+// Not active on init, to be activated via notif from deps
+State::State(const string& aName): Comp(aName), mSobs(*this), mSntf(*this), mOutput(NULL), mIsActive(false), mUninit(true)
 {
 }
 
-State::State(const string& aName, MOwner* aOwner): Comp(aName, aOwner), mSobs(*this), mSntf(*this), mOutput(NULL), mIsActive(true),
+State::State(const string& aName, MOwner* aOwner): Comp(aName, aOwner), mSobs(*this), mSntf(*this), mOutput(NULL), mIsActive(false),
     mUninit(true), mOutputsNotified(false)
 {
 }
@@ -21,26 +22,29 @@ State::~State()
     }
 };
 
+
 void State::Update()
 {
-    if (mOwner != NULL) {
-	mOwner->OnCompUpdated(this);
-    }
+    Trans();
+    NotifyCompUpdated();
+    // Update has been done, reset active flag now
+    mIsActive = false;
 }
 
 void State::Confirm()
 {
-    mIsActive = false;
     if (memcmp(Conf(), Upd(), Len()) || mUninit) {
 	ConnPoint* cp = dynamic_cast<ConnPoint*>(mOutput);
 	assert(cp != NULL);
 	memcpy(Conf(), Upd(), Len()); // Upd to Conf
-	NotifyOutputs(cp);
+	if (mOutput->IsConnected()) {
+	    NotifyOutputs(cp);
+	} else {
+	    NotifyCompConfirmed();
+	}
 	mUninit = false;
     } else {
-	if (mOwner != NULL) {
-	    mOwner->OnCompConfirmed(this);
-	}
+	NotifyCompConfirmed();
     }
 }
 
@@ -48,9 +52,10 @@ void State::Run()
 {
     assert(mOwner == NULL);
 
+    Confirm();
     while (mIsActive) {
-	Confirm();
 	Update();
+	Confirm();
     }
 }
 
@@ -58,9 +63,7 @@ void State::HandleInputChanged()
 {
     if (!mIsActive) {
 	mIsActive = true;
-	if (mOwner != NULL) {
-	    mOwner->OnCompActivated(this);
-	}
+	NotifyCompActivated();
     }
 }
 
@@ -69,9 +72,7 @@ void State::HandleStateChangeHandled(MIface* aObserver)
     TIfSet::size_type res = mNotifUnconfirmed.erase(aObserver);
     assert(res == 1);
     if (mOutputsNotified && mNotifUnconfirmed.empty()) {
-	if (mOwner != NULL) {
-	    mOwner->OnCompConfirmed(this);
-	}
+	NotifyCompConfirmed();
     }
 }
 

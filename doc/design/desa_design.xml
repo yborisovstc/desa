@@ -393,6 +393,14 @@
 	</sect2>
     </sect1>
 
+    <sect1><title>Verification: Regex</title>
+	<sect2><title>Intro</title>
+	    <simpara>This verification aim is to prove DESA with regular expression handler model.</simpara>
+	</sect2>
+	<sect2><title>First approach of implementing regex engine.</title>
+	</sect2>
+    </sect1>
+
     <sect1 id="ds_th"><title>To handle</title>
 
     </sect1>

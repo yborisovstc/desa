@@ -27,7 +27,7 @@ namespace desa {
 	friend class Owner;
 	friend class Comp;
 
-	enum TState {
+	enum TDesState {
 	    ESt_Unknown = 0,
 	    ESt_UpdateRequesing,
 	    ESt_Updated,
@@ -58,6 +58,9 @@ namespace desa {
 	    virtual void Update();
 	    virtual void Confirm();
 	protected:
+	    void DumpComps() const;
+	    void DumpActives() const;
+	protected:
 	    OwnerImpl mOwnerImpl;
 	    TComps mComps; // Register of the components
 	    TActives mStatus1; // Component's statuses
@@ -66,7 +69,7 @@ namespace desa {
 	    TActives* mStatusCur; // Component's status on the current step
 	    TActives* mStatusNext; // Component's status on the next step
 	    TCompsSet mRequested; // Components requested for update/confirm
-	    TState mState; // DES state
+	    TDesState mState; // DES state
 	    bool mAllCompsConfirmed;
 	    bool mAllCompsUpdated;
 	    mutex mRq;
