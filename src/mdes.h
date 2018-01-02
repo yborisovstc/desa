@@ -18,6 +18,7 @@ namespace desa {
 	    MBase(const string& aName): mName(aName) {};
 	    virtual ~MBase() {};
 	    virtual const std::string& Name() const { return mName;};
+	    virtual const std::string GetUri() const { return std::string();};
 	protected:
 	    string mName;
     };
@@ -93,12 +94,20 @@ namespace desa {
      * @brief Named component
      *
      */
+    // TODO To move to base.h
     class Comp: public MBase, public MComp
     {
 	public:
 	    Comp(const string& aName): MBase(aName), mOwner(NULL) {};
 	    Comp(const string& aName, MOwner* aOwner): MBase(aName), mOwner(aOwner) {};
 	    void SetOwner(MOwner* aOwner) { assert(mOwner == NULL); mOwner = aOwner;};
+	    virtual const std::string GetUri() const override {
+		if (mOwner == nullptr) return "/";
+		const MBase* owner = mOwner->GetBase();
+		std::string uri = (owner != nullptr) ? owner->GetUri(): "?";
+		uri.append("/"); uri.append(Name());
+		return uri;
+	    };
 	protected:
 	    MOwner* mOwner;
     };

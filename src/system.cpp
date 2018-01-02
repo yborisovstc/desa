@@ -69,6 +69,13 @@ void System::Update()
 	mState = ESt_UpdateRequesing;
     }
     assert(mRequested.empty());
+
+    // After confirmation move to new step, swap status
+    TActives* cur = mStatusCur;
+    mStatusCur = mStatusNext;
+    mStatusNext = cur;
+    mStatusNext->clear();
+
     pair<set<MComp*>::iterator,bool> ret;
     mAllCompsUpdated = false;
     int cnt = mStatusCur->size();
@@ -99,10 +106,12 @@ void System::Confirm()
 	comp->Confirm();
     }
     // After confirmation move to new step, swap status
+    /*
     TActives* cur = mStatusCur;
     mStatusCur = mStatusNext;
     mStatusNext = cur;
     mStatusNext->clear();
+    */
 }
 
 void System::AddComp(Comp* aComp)

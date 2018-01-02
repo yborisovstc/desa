@@ -80,13 +80,24 @@ bool ConnPointBase::IsConnected() const
 {
     return !mPairs.empty();
 }
+const string ConnPointBase::GetUri() const
+{
+    const MBase* owner = nullptr;
+    std::string uri = (owner != nullptr) ? owner->GetUri(): "?";
+    uri.append("/"); uri.append(Name());
+    return uri;
+};
 
 void ConnPointBase::Dump() const
 {
     cout << "ConnPointBase [" << Name() << "]" << endl;
     cout << "Dir: " << ((mDir == EInput)?"Inp":"Out") << endl;
     cout << "Pairs: ";
-    for (auto& pair: mPairs) { cout << pair << ", ";}; cout << endl;
+    for (auto& pair: mPairs) {
+	const MBase* pbase = pair->MConnPoint_Base();
+	cout << pair << "-" << pbase->GetUri() << ", ";
+    }
+    cout << endl;
 
 }
 
@@ -160,6 +171,10 @@ void ConnPoint::OnPairChanged(MConnPoint* aPair)
     DoDisconnect(*aPair);
     DoConnect(*aPair);
     Notify(aPair);
+}
+bool ConnPoint::IsConnected() const
+{
+    return ConnPointBase::IsConnected() && Required().size() != 0;
 }
 
 void ConnPoint::Dump() const

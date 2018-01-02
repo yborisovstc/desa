@@ -12,7 +12,7 @@ ut_desa_lib_CXXFLAGS=-I@srcdir@/../src -pthread
 
 check: test_desa_lib
 
-test_grayb_lib:
+test_desa_lib:
 	 ./ut-desa-lib
 
 

@@ -94,9 +94,23 @@
 		the "client" when the agent was in remote environment. Proxy in that case interacts to the real agent
 		via RPC. But there was problem realized that synchronous API of agent makes the RPC complex. Is was
 		seemed that the interaction can be silmplified if we managed to create agent with asynchronous API.
-		But what would be approach of such asycn agents? The initial idea is to use DES again but on 
+		But what would be approach of such async agents? The initial idea is to use DES again but on 
 		level of agents framework.
 	    </simpara>
+	</sect2>
+	<sect2><title>How to make multi-agents asynchronous.</title>
+	    <simpara>Let's look at the nature of the current MA implementation. The base comes from nature of native processing modeli (i.e. C++ on typical
+		HW arch), where the system is the set of objects. An object is normally state machine: i.e. there is some data (context, attributes, etc.) and
+		events (methods, APIs, etc). Particularly in grayb the object can implements a set of simple interfaces that affects same context.
+		There is also mechanism to obtain required interface of object. Element (agent) in grayb multiagent environment is just such object with
+		specific set of interfaces. This interfaces supports base agent functionality like mutability, native hierarchy,
+		navigation in the hierarchy etc.</simpara>
+	    <simpara>So the first thought of how to transform such system to async was just to ensure that all interfaces are asyncronous.
+		This seems quite complicated task requiring full redesign of grayb. This is because in that case we need to implement specific state
+		machine for each of interfaces. So the idea was to use one universal state machine mechanism for implementing these interfaces
+		state machines. Low level DES seems to be one of the candidates for such mechanism.</simpara>
+	    <simpara>We need not just implement particular interface asynchronously but also change interface itself. For instance the method that directly
+		returns some data needs to be re-organized with usage of client-observer.</simpara>
 	</sect2>
     </sect1>
 
@@ -245,9 +259,9 @@
 	    <simpara>The cycle is (simplified diagram):</simpara>
 	    <figure id="fig_desa_cycle_async_s_icd"><title>Proposed DES update cycle (simplified) - APIs</title><imageobject>
 		    <imagedata fileref="pics/desa_cycle_async_s_icd.jpg"/> </imageobject></figure>
-	    <simplified>On the diagram State2 is dependent from State1. So State2 input is connected to State1 output. State2
+	    <simpara>On the diagram State2 is dependent from State1. So State2 input is connected to State1 output. State2
 		buffers the sign of activation on confirmation phase (on OnSourceChanged signal). On update phase State2 requests
-		data from State1.</simplified>
+		data from State1.</simpara>
 	    <simpara>The full cycle is:</simpara>
 	    <orderedlist>
 		<listitem>On system creation the system and all it's subsystems and states are marked as active. This is done in base class
@@ -399,6 +413,53 @@
 	</sect2>
 	<sect2><title>First approach of implementing regex engine.</title>
 	</sect2>
+    </sect1>
+
+    <sect1 id="ds_areq"><title>Asynchronous requests</title>
+	<sect2><title>Intro</title>
+	    <simpara>One kind of interfaces of async system would be so called async requests. This happens when we consider async system not as 
+		DES but as regular C++ object that offers some interfaces for issuing request to the object. In fact the most usual native SW programming
+	       model is just a chain of clients-services.  This "simulation" of async system
+		can simplify the design of multi-agent. The question is how to implement such simulation using DES approach. Is it real design 
+		solution?</simpara>
+	    <simpara>As a request we can consider any getter, e.g. grayb Elem::GetNode().</simpara>
+	</sect2>
+	<sect2><title>Dedicated Connection point for request</title>
+	    <simpara>One possible solution for async requests in DES is to have dedicated connection point for it. This point provides iface to set request's
+		signature (i.e. parameters). This point requres iface to set the result of the request.</simpara>
+	    <simpara>Conn point allows multiple connections so multiple clients can do requests to service system.</simpara>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_csd"><title>Client-server design</title>
+	<sect2><title>In many cases it is convenient to consider DES as serice. Example is "simulating" regular C++ service objects with DES, ref
+		<xref linkend="ds_areq"/></title>
+	</sect2>
+    </sect1>
+
+    <sect1 id="cr"><title>Change requests</title>
+	<sect2 id="cr_001"><title>Error handling: notification of dangling output on state confirmation</title>
+	    <sect3>Requirements
+		<simpara><ulink url="../requirements/index.html#uc_004"/></simpara>
+	    </sect3>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_ena"><title>Example: node of agents</title>
+	<sect2><title>Intro</title>
+	    <simpara>This example is some kind of network of agents, like <ulink url="../../../grayb/"/></simpara>
+	</sect2>
+	<sect2><title>Thoughts</title>
+	    <sect3><title>Element as system with controllers</title>
+		<simpara>It's obvious that </simpara>
+	    </sect3>
+	</sect2>
+    </sect1>
+
+    <sect1><title>The whole system as DES</title>
+	<simpara>The initial idea of creating multi agent element basing on low-level DES (ref <xref linkend="ds_intro_i"/>) has a logical conflict.
+	    The whole system has to be implemented as low-level DES in that case, but not separate element. This is because the DES nature of interface of
+	element can be utilize only in the scope of parent system, i.e. the system cycle has to be working.</simpara>
     </sect1>
 
     <sect1 id="ds_th"><title>To handle</title>

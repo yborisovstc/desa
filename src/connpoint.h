@@ -28,6 +28,9 @@ namespace desa {
 	    virtual bool IsCompatible(const MConnPoint& aPair, bool aExtd = false) const;
 	    virtual void OnPairChanged(MConnPoint* aPair);
 	    virtual bool IsConnected() const override;
+	    virtual const MBase* MConnPoint_Base() const { return this;};
+	    // From MBase
+	    virtual const std::string GetUri() const;
 	protected:
 	    virtual bool DoConnect(const MConnPoint& aCp);
 	    virtual bool DoDisconnect(const MConnPoint& aCp);
@@ -82,6 +85,7 @@ namespace desa {
 	    virtual bool Disconnect(const MConnPoint& aCp);
 	    virtual bool IsCompatible(const MConnPoint& aPair, bool aExtd = false) const;
 	    virtual void OnPairChanged(MConnPoint* aPair);
+	    virtual bool IsConnected() const override;
 	protected:
 	    virtual void Dump() const override;
 	protected:

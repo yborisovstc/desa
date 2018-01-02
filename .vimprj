@@ -40,4 +40,9 @@ test=test CD=. filter="*.cpp *.h *.xml *.am" {
    ut-fapws-lib
   }
 }
+samples=samples CD=. filter="*.cpp *.h *.xml *.am" {
+  mutag=mutag CD=. filter="*" {
+   ut-fapws-lib
+  }
+}
 }

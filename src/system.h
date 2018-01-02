@@ -42,6 +42,8 @@ namespace desa {
 		    virtual void OnCompActivated(MComp* aComp) { mHost.HandleCompActivated(aComp);};
 		    virtual void OnCompUpdated(MComp* aComp) { mHost.HandleCompUpdated(aComp);};
 		    virtual void OnCompConfirmed(MComp* aComp) { mHost.HandleCompConfirmed(aComp);};
+		    // From MIface
+		    virtual const MBase* GetBase() const {  return dynamic_cast<const MBase*>(&mHost);};
 		protected:
 		    System& mHost;
 	    };

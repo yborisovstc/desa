@@ -19,6 +19,7 @@ namespace desa {
 	    virtual bool IsCompatible(const MConnPoint& aPair, bool aExtd = false) const = 0;
 	    virtual void OnPairChanged(MConnPoint* aPair) = 0;
 	    virtual bool IsConnected() const = 0;
+	    virtual const MBase* MConnPoint_Base() const { return nullptr;};
     };
 
 } // namespace desa

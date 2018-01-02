@@ -11,7 +11,7 @@ State::State(const string& aName): Comp(aName), mSobs(*this), mSntf(*this), mOut
 }
 
 State::State(const string& aName, MOwner* aOwner): Comp(aName, aOwner), mSobs(*this), mSntf(*this), mOutput(NULL), mIsActive(false),
-    mUninit(true), mOutputsNotified(false)
+    mUninit(true), mOutputsNotified(false), mEnableDanglingOutput(false)
 {
 }
 
@@ -39,6 +39,8 @@ void State::Confirm()
 	memcpy(Conf(), Upd(), Len()); // Upd to Conf
 	if (mOutput->IsConnected()) {
 	    NotifyOutputs(cp);
+	} else if (!mEnableDanglingOutput) {
+	    assert(false);
 	} else {
 	    NotifyCompConfirmed();
 	}

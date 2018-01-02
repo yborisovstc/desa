@@ -50,7 +50,7 @@
     </sect1>
 
     <sect1 id="uc"> <title>Use cases</title>
-	<sect2><title>Two connected subsystems gets disconnected</title>
+	<sect2 id="uc_001"><title>UC_001 Two connected subsystems gets disconnected</title>
 	    <sect3><title>Actors</title>
 		<itemizedlist>
 		    <listitem>CLIENT: client of SYSTEM</listitem>
@@ -81,7 +81,7 @@
 	    <sect3><title>Clarification</title> </sect3>
 	    <sect3><title>Desing</title> </sect3>
 	</sect2>
-	<sect2><title>One of two connected states gets deleted - required interfaces set is updated</title>
+	<sect2 id="uc_002"><title>UC_002 One of two connected states gets deleted - required interfaces set is updated</title>
 	    <sect3><title>Actors</title>
 		<itemizedlist>
 		    <listitem>CLIENT: client of SYSTEM</listitem>
@@ -111,6 +111,119 @@
 	    <sect3><title>Discussion</title> </sect3>
 	    <sect3><title>Clarification</title> </sect3>
 	    <sect3><title>Desing</title> </sect3>
+	</sect2>
+	<sect2 id="uc_003"><title>UC_003 Error handling</title>
+	    <sect3><title>Actors</title>
+		<itemizedlist>
+		    <listitem>CLIENT: client of SYSTEM</listitem>
+		</itemizedlist>
+	    </sect3>
+	    <sect3><title>Preconditions</title>
+		<itemizedlist>
+		    <listitem>SYSTEM is fully designed but there is some error in the system</listitem>
+		</itemizedlist>
+	    </sect3>
+	    <sect3><title>Assumptions</title> </sect3>
+	    <sect3><title>Normal</title>
+		<itemizedlist>
+		    <listitem>CLIENT runs SYSTEM - SYSTEM notifies CLIENT of the error.</listitem>
+		</itemizedlist>
+	    </sect3>
+	    <sect3><title>Alternative</title> <simpara>Alternative flows</simpara> </sect3>
+	    <sect3><title>Exceptions</title> </sect3>
+	    <sect3><title>Variations</title> </sect3>
+	    <sect3><title>Extends</title></sect3>
+	    <sect3><title>Extended by</title>
+		<itemizedlist>
+		    <listitem><xref linkend="uc_004"/></listitem>
+		</itemizedlist>
+	    </sect3>
+	    <sect3><title>Relates to</title> </sect3>
+	    <sect3><title>Discussion</title>
+		<simpara>This is clear idea that there shouldn't be run-time error handling.</simpara>
+	    </sect3>
+	    <sect3><title>Clarification</title> </sect3>
+	    <sect3><title>Desing</title> </sect3>
+	</sect2>
+	<sect2 id="uc_004"><title>UC_004 Error handling: state with disconnected output (dangling state).</title>
+	    <sect3><title>Actors</title>
+		<itemizedlist>
+		    <listitem>CLIENT: client of SYSTEM</listitem>
+		    <listitem>States A within SYSTEM</listitem>
+		</itemizedlist>
+	    </sect3>
+	    <sect3><title>Preconditions</title>
+		<itemizedlist>
+		    <listitem>SYSTEM is fully designed but there is the error: state A output is disconnected.</listitem>
+		</itemizedlist>
+	    </sect3>
+	    <sect3><title>Assumptions</title> </sect3>
+	    <sect3><title>Normal</title>
+		<itemizedlist>
+		    <listitem>CLIENT runs SYSTEM - SYSTEM notifies CLIENT of output disconnecting error.</listitem>
+		</itemizedlist>
+	    </sect3>
+	    <sect3><title>Alternative</title>
+		<simpara>The type of notification from SYSTEM depends on </simpara>
+	    </sect3>
+	    <sect3><title>Exceptions</title> </sect3>
+	    <sect3><title>Variations</title> </sect3>
+	    <sect3><title>Extends</title>
+		<itemizedlist>
+		    <listitem><xref linkend="uc_003"/></listitem>
+		</itemizedlist>
+	    </sect3>
+	    <sect3><title>Extended by</title> </sect3>
+	    <sect3><title>Relates to</title> </sect3>
+	    <sect3 id="uc_004_dsc"><title>Discussion</title>
+		<orderedlist>
+		    <listitem>This is clear idea that there shouldn't be disconnected states within correctly designed system.</listitem>
+		    <listitem>Often this "dangling" state happens on model development phase, when the only part of the model is
+			created. In that case some states can with disconnected outputs. So we need to treate this case as valid.
+			Thus it makes sense to supports options for this case handling depending on model validatin mode:
+			<itemizedlist>
+			    <listitem>Normal mode: SYSTEM generate exception</listitem>
+			    <listitem>Debug mode: SYSTEM generates warning to log records</listitem>
+			</itemizedlist>
+		    </listitem>
+		</orderedlist>
+	    </sect3>
+	    <sect3><title>Clarification</title> </sect3>
+	    <sect3><title>Desing</title> </sect3>
+	    <sect3><title>Tracing</title>
+		<itemizedlist>
+		    <listitem><ulink url="../design/index.html#cr_001"/></listitem>
+		</itemizedlist>
+	    </sect3>
+	</sect2>
+	<sect2 id="uc_005"><title>UC_005 Logging</title>
+	    <sect3><title>Actors</title>
+		<itemizedlist>
+		    <listitem>CLIENT: client of SYSTEM</listitem>
+		</itemizedlist>
+	    </sect3>
+	    <sect3><title>Preconditions</title>
+		<itemizedlist>
+		    <listitem>SYSTEM is fully designed</listitem>
+		</itemizedlist>
+	    </sect3>
+	    <sect3><title>Assumptions</title> </sect3>
+	    <sect3><title>Normal</title>
+		<itemizedlist>
+		    <listitem>CLIENT runs SYSTEM - SYSTEM provides CLIENT with the logging records.</listitem>
+		</itemizedlist>
+	    </sect3>
+	    <sect3><title>Alternative</title> </sect3>
+	    <sect3><title>Exceptions</title> </sect3>
+	    <sect3><title>Variations</title> </sect3>
+	    <sect3><title>Extends</title> </sect3>
+	    <sect3><title>Extended by</title> </sect3>
+	    <sect3><title>Relates to</title> </sect3>
+	    <sect3><title>Discussion</title> </sect3>
+	    <sect3><title>Clarification</title> </sect3>
+	    <sect3><title>Desing</title> </sect3>
+	    <sect3><title>Tracing</title>
+	    </sect3>
 	</sect2>
     </sect1>
 

@@ -46,11 +46,13 @@ namespace desa {
 	    template<typename T> inline operator const TState<T>&() const;
 	    template<typename T> inline operator const T&() const;
 	    ConnPointBase& Output() { return *mOutput;};
+	    void EnableDanglingOutput(bool aEnable = true) { mEnableDanglingOutput = aEnable;};
 	public:
 	    virtual void Run();
 	    // From MComp
 	    virtual void Update();
 	    virtual void Confirm();
+	    virtual const MBase* GetBase() const {  return dynamic_cast<const MBase*>(this);};
 	protected:
 	    virtual void Trans() {};
 	    virtual void* Conf() { return NULL;};
@@ -72,6 +74,7 @@ namespace desa {
 	    bool mUninit; // Sign of state is not initialized yet
 	    TIfSet mNotifUnconfirmed; // Set of notifiers not yet confirmed notification
 	    bool mOutputsNotified;
+	    bool mEnableDanglingOutput;
     };
 
     inline void State::NotifyCompActivated()

@@ -254,17 +254,20 @@ void Ut_Regex::test_ConcatTwoOneChar()
 class Count: public TState<int>
 {
     public:
-	Count(const string& aName, int aMatchCnt): TState<int>(aName, NULL, 0), mMatchCnt(aMatchCnt), mSelf("Self", mSobs) {};
+	Count(const string& aName, int aMatchCnt): TState<int>(aName, NULL, 0), mMatchCnt(aMatchCnt), mInp("Inp", mSobs), mSelf("Self", mSobs) {};
 	virtual void Trans() override {
-	    auto &inp = mSelf.Data().begin()->second;
-	    if (inp < mMatchCnt) {
-		mUpd = inp + 1;
+	    auto &inp = mInp.Data().begin()->second.pos;
+	    auto &self = mSelf.Data().begin()->second;
+	    if (inp > -1 && self < mMatchCnt) {
+		mUpd = self + 1;
 	    }
 	    cout << Name() << " Update, [" << mUpd  << "]" << endl;
 	}
+    public:
+	StateInput<TSourceElem> mInp;
+	StateInput<int> mSelf;
     protected:
 	int mMatchCnt;
-	StateInput<int> mSelf;
 };
 
 /**
@@ -297,7 +300,6 @@ class MultiExact: public System
     public:
 	MultiExact(const string& aName, MOwner* aOwner, int aMatchCnt);
 	virtual ~MultiExact();
-	virtual void Update() override;
     public:
 	ExtStateInp<TSourceElem> mInp;
 	ExtStateOut<TSourceElem> mOut;
@@ -312,16 +314,16 @@ MultiExact::MultiExact(const string& aName, MOwner* aOwner, int aMatchCnt): Syst
 {
     AddComp(mCount = new Count("Count", mMatchCnt));
     AddComp(mSwitch = new MultiExactSwitch("Switch", mMatchCnt));
+    mSwitch->EnableDanglingOutput();
     bool res = Connect(mSwitch->mInp, mInp.Orig());
-    res = Connect(mSwitch->Output(), mOut.Orig());
-    res = Connect(mCount->Output(), mSwitch->mInpCount);
+    res = res && Connect(mInp.Orig(), mCount->mInp);
+    res = res && Connect(mSwitch->Output(), mOut.Orig());
+    res = res && Connect(mCount->Output(), mCount->mSelf);
+    res = res && Connect(mCount->Output(), mSwitch->mInpCount);
+    assert(res);
 }
 
 MultiExact::~MultiExact()
-{
-}
-
-void MultiExact::Update()
 {
 }
 
@@ -352,10 +354,10 @@ Concat2::Concat2(const string& aName, MOwner* aOwner): System(aName, aOwner)
     AddComp(mAtom1);
     AddComp(mAtom2);
     bool res = Connect(mAtom1->mInp, mSource->Output());
-    res = Connect(mAtom2->mInp, mSource->Output());
-    res = Connect(mAtom2->mInpPresursor, mAtom1->Output());
-    res = Connect(mAtom2->Output(), mAtom2->mInpPresursor);
-    res = Connect(mAtom2->Output(), mMultiExact->mInp);
+    res = res && Connect(mAtom2->mInp, mSource->Output());
+    res = res && Connect(mAtom2->mInpPresursor, mAtom1->Output());
+    res = res && Connect(mAtom2->Output(), mAtom2->mInpPresursor);
+    res = res && Connect(mAtom2->Output(), mMultiExact->mInp);
     CPPUNIT_ASSERT_MESSAGE("Fail to connect inp to output", res);
 }
 
