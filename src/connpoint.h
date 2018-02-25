@@ -49,15 +49,17 @@ namespace desa {
      *
      */
     // TODO [YB] To desing templated Extention
-    class Extention: public ConnPointBase
+    // TODO Extention with input direction has to support number of origins. It has acts as a coupler.
+    class Extention: public ConnPointBase, public MExtension
     {
 	public:
 	    Extention(const string& aName, TDir aDir, ConnPointBase* aOrig): ConnPointBase(aName, aDir), mOrig(aOrig) {};
 	    virtual ~Extention();
 	    ConnPointBase& Orig() { return *mOrig; };
-	    const ConnPointBase& Orig() const { return *mOrig; };
 	    // From MConnPoint
-	    virtual bool IsCompatible(const MConnPoint& aPair, bool aExtd = false) const;
+	    const MConnPoint& Orig() const { return *mOrig; };
+	    // From MConnPoint
+	    virtual bool IsCompatible(const MConnPoint& aPair, bool aExtd = false) const override;
 	protected:
 	    ConnPointBase* mOrig; // Original conn point that is represented by extention, owned
     };
@@ -207,6 +209,45 @@ namespace desa {
 	    MInputObserver& mObserver;
     };
 
+    /**
+     * @brief Connection point for state multilcient input
+     *
+     * Improved StateInput supporting multiple obsesrvers, ref uc_007
+     */
+    template<typename T> class StateMcInp: public TConnPoint<MStateObserver<T>, MStateNotifier>, public MStateObserver<T>
+    {
+	public:
+	    typedef pair<const MIface*, T> TDataElem;
+	    typedef map<const MIface*, T> TData;
+	public:
+	    StateMcInp(const string& aName, MInputObserver& aObserver):
+		TConnPoint<MStateObserver<T>, MStateNotifier>(aName, MConnPoint::EInput, this) {};
+	    const TData& Data() { return mData;};
+	    void attach(MInputObserver* aObs) {
+		for (auto obs: mObservers) assert(obs != aObs);
+		mObservers.push_back(aObs);
+	    }
+	    void deattach(MInputObserver* aObs) {
+		for (auto it = mObservers.begin(); it < mObservers.end(); it++)
+		    if (*it == aObs) { mObservers.erase(it); return; }
+		assert(true);
+	    }
+	    // From MStateObserver
+	    virtual void OnStateChanged(MIface* aSource, const T& aData) {
+		if (mData.count(aSource) == 0) {
+		    mData.insert(TDataElem(aSource, aData));
+		} else { mData.at(aSource) = aData; }
+		for (auto obs: mObservers)
+		    obs->OnInputChanged();
+		MStateNotifier* intf = *aSource;
+		intf->OnStateChangeHandled(this);
+	    };
+	protected:
+	    TData mData;
+	    vector<MInputObserver*> mObservers;
+    };
+
+
     template<typename T> class StateOutput: public TConnPoint<MStateNotifier, MStateObserver<T>>
     {
 	public:
@@ -256,6 +297,25 @@ namespace desa {
     };
 
 
+    /**
+     * @brief Socket
+     */
+
+    class Socket: public ConnPointBase
+    {
+	public:
+	    typedef pair<string, ConnPointBase*> TPinsElem;
+	    typedef map<string, ConnPointBase*> TPins;
+	public:
+	    Socket(const string& aName, TDir aDir): ConnPointBase(aName, aDir) {}
+	    virtual ~Socket();
+	    // From MConnPoint
+	    virtual bool IsCompatible(const MConnPoint& aPair, bool aExtd = false) const override;
+	protected:
+	    const TPins& pins() const { return mPins;}
+	protected:
+	    TPins mPins;
+    };
 
 } // namespace desa
 

@@ -53,11 +53,14 @@ namespace desa {
 	    virtual void Update();
 	    virtual void Confirm();
 	    virtual const MBase* GetBase() const {  return dynamic_cast<const MBase*>(this);};
+	    operator MInputObserver*() {return &mSobs;}
 	protected:
 	    virtual void Trans() {};
-	    virtual void* Conf() { return NULL;};
-	    virtual void* Upd() { return NULL;};
-	    virtual int Len() const { return 0;};
+	    //virtual void* Conf() { return NULL;};
+	    //virtual void* Upd() { return NULL;};
+	    //virtual int Len() const { return 0;};
+	    virtual bool IsChanged() const { return false;};
+	    virtual void ApplyChange() {};
 	    virtual void NotifyOutputs(ConnPoint* aOutput);
 	    void HandleInputChanged();
 	    void HandleStateChangeHandled(MIface* aObserver);
@@ -115,6 +118,10 @@ namespace desa {
 		TState<T>& mHost;
 	};
 	public:
+	    // Disabling undefined value, ref uc_006 invalidated
+	    // TState(const string& aName): State(aName, nullptr), mData(*this) {
+	    //	    mOutput = new TConnPoint<MStateNotifier, MStateObserver<T>>("Out", MConnPoint::EOutput, mSntf);
+	    //};
 	    TState(const string& aName, MOwner* aOwner, const T& aData):
 		State(aName, aOwner), mConf(aData), mUpd(aData), mData(*this) {
 		    mOutput = new TConnPoint<MStateNotifier, MStateObserver<T>>("Out", MConnPoint::EOutput, mSntf);
@@ -122,9 +129,11 @@ namespace desa {
 	    virtual ~TState() {};
 	    inline operator const T&() const { return mConf;};
 	protected:
-	    virtual void* Conf() { return &mConf;};
-	    virtual void* Upd() {return &mUpd;};
-	    virtual int Len() const { return sizeof(T); };
+	    //virtual void* Conf() { return &mConf;};
+	    //virtual void* Upd() {return &mUpd;};
+	    //virtual int Len() const { return sizeof(T); };
+	    virtual bool IsChanged() const { return !(mConf == mUpd);};
+	    virtual void ApplyChange() { mConf = mUpd;};
 	    /*
 	    virtual void NotifyOutputs(ConnPoint* aOutput) {
 		int cnt = aOutput->Required().size();

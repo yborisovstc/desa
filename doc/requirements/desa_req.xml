@@ -225,6 +225,119 @@
 	    <sect3><title>Tracing</title>
 	    </sect3>
 	</sect2>
+	<sect2 id="uc_006"><title>UC_006 System with invalid states</title>
+	    <sect2><title>State</title><simpara><xref linkend="df_st_invalid"/></simpara></sect2>
+	    <sect3><title>Actors</title>
+		<itemizedlist>
+		    <listitem>CLIENT: client of SYSTEM</listitem>
+		</itemizedlist>
+	    </sect3>
+	    <sect3><title>Preconditions</title>
+		<itemizedlist>
+		    <listitem>SYSTEM is fully designed, i.e. system structure is defined completelly.</listitem>
+		    <listitem>Some of SYSTEM state is not defined, is is invalid</listitem>
+		</itemizedlist>
+	    </sect3>
+	    <sect3><title>Assumptions</title> </sect3>
+	    <sect3><title>Normal</title>
+		<itemizedlist>
+		    <listitem>CLIENT runs SYSTEM - SYSTEM moves taking into account undefined states</listitem>
+		</itemizedlist>
+	    </sect3>
+	    <sect3><title>Alternative</title> </sect3>
+	    <sect3><title>Exceptions</title> </sect3>
+	    <sect3><title>Variations</title> </sect3>
+	    <sect3><title>Extends</title> </sect3>
+	    <sect3><title>Extended by</title> </sect3>
+	    <sect3><title>Relates to</title> </sect3>
+	    <sect3><title>Discussion</title>
+		<orderedlist>
+		    <listitem>Is this use-case really valid? Alternative approach is always to have fully defined system.</listitem>
+		</orderedlist>
+	    </sect3>
+	    <sect3><title>Clarification</title> </sect3>
+	    <sect3><title>Desing</title> </sect3>
+	    <sect3><title>Tracing</title> </sect3>
+	</sect2>
+	<sect2 id="uc_007"><title>UC_007 Shared input</title>
+	    <sect2><title>State</title><simpara><xref linkend="df_st_proposed"/></simpara></sect2>
+	    <sect3><title>Actors</title>
+		<itemizedlist>
+		    <listitem>DESIGNER: creator of SYSTEM</listitem>
+		</itemizedlist>
+	    </sect3>
+	    <sect3><title>Preconditions</title>
+		<itemizedlist>
+		    <listitem>DESIGNER needs to create SYSTEM that includes subsystem SS1. This subsystem shall contain input extention INP_1 and some states
+			ST_1 ... ST_N that has theirs inputs connected to this extention.</listitem>
+		</itemizedlist>
+	    </sect3>
+	    <sect3><title>Normal</title>
+		<itemizedlist>
+		    <listitem>DESIGNER implements INP_1 and connects inputs of ST_1 ... ST_N to SS1 input extention INP_1, DESIGNER notices that SYSTEM
+			is designed with overhead: inputs of states ST_1 ... ST_N has a copy of same data; DESIGNER thinks that probably there could be
+			better if states can share INP_1 between them.
+		    </listitem>
+		</itemizedlist>
+	    </sect3>
+	    <sect3><title>Extends</title> </sect3>
+	    <sect3><title>Extended by</title> </sect3>
+	    <sect3><title>Relates to</title> </sect3>
+	    <sect3><title>Discussion</title>
+		<sect4><title>Limitation: input and state need to be in same environment</title>
+		    <simpara>This is obvious limitation if sharing is implemented as reference to input INP_1 from each of states. But this limitation
+		    is not actually valuable because normally the states are implemented in system's environment.</simpara>
+		</sect4>
+	    </sect3>
+	    <sect3><title>Clarification</title> </sect3>
+	    <sect3><title>Desing</title> </sect3>
+	    <sect3><title>Tracing</title> </sect3>
+	</sect2>
+	<sect2 id="uc_008"><title>UC_008 Socket</title>
+	    <sect2><title>State</title><simpara>Ref <xref linkend="df_st_proposed"/></simpara></sect2>
+	    <sect3><title>Actors</title>
+		<itemizedlist>
+		    <listitem>CLIENT: client of SYSTEM</listitem>
+		</itemizedlist>
+	    </sect3>
+	    <sect3><title>Preconditions</title>
+		<itemizedlist>
+		    <listitem>DESIGNER needs to create SYSTEM that includes subsystems SS1  and SS2. These subsystem expose a number connection points and 
+			these connection points need to be connected correspondingly.</listitem>
+		</itemizedlist>
+	    </sect3>
+	    <sect3><title>Assumptions</title> </sect3>
+	    <sect3><title>Normal</title>
+		<itemizedlist>
+		    <listitem>DESIGNER creates SYSTEM; DESIGNER notices that he got a nubmer of connections between SS1 and SS2;
+			DESIGNER thinks that probably there could be better if he can use just one connection instead of these multiple connections;
+			to do that he probably needs to combine the connection points of the subsystem in one complex connection point - socket. 
+		    </listitem>
+		</itemizedlist>
+	    </sect3>
+	    <sect3><title>Alternative</title> <simpara>Alternative flows</simpara> </sect3>
+	    <sect3><title>Exceptions</title> </sect3>
+	    <sect3><title>Variations</title> </sect3>
+	    <sect3><title>Extends</title></sect3>
+	    <sect3><title>Extended by</title> </sect3>
+	    <sect3><title>Relates to</title>
+		<itemizedlist>
+		    <listitem><xref linkend=""/></listitem>
+		</itemizedlist>
+	    </sect3>
+	    <sect3><title>Discussion</title>
+		<sect4><title>Socket components corresponding.</title>
+		    <simpara>Socket combines different connection points. Each connection point in the socket is uniquely identified. So there can
+		    be esablish "vitrual" relation between same components of the sockets.</simpara>
+		</sect4>
+	    </sect3>
+	    <sect3><title>Clarification</title> </sect3>
+	    <sect3><title>Desing</title>
+		<orderedlist>
+		    <listitem>Ref to related desing materials</listitem>
+		</orderedlist>
+	    </sect3>
+	</sect2>
     </sect1>
 
     <sect1 id="rq"> <title>Requirements</title>
@@ -264,10 +377,14 @@
     </sect1>
 
     <sect1 id="rqp"><title>Proposals</title>
+	<orderedlist>
+	    <listitem>Ref <xref linkend="uc_007"/></listitem>
+	</orderedlist>
     </sect1>
 
     <sect1 id="rqt"><title>Templates</title>
 	<sect2 id="rqt_uc"><title>UC_XXX Use-case name</title>
+	    <sect2><title>State</title><simpara>Ref <xref linkend="df_st"/></simpara></sect2>
 	    <sect3><title>Actors</title>
 		<itemizedlist>
 		    <listitem>CLIENT: client of SYSTEM</listitem>
@@ -301,6 +418,14 @@
 		    <listitem>Ref to related desing materials</listitem>
 		</orderedlist>
 	    </sect3>
+	</sect2>
+    </sect1>
+
+    <sect1 id="df"><title>Definitions</title>
+	<sect2 id="df_st"><title>State of use-case</title>
+	    <glossentry id="df_st_valid"><glossterm>VALID</glossterm> <glossdef><simpara>Mark of valid state of statement</simpara></glossdef></glossentry>
+	    <glossentry id="df_st_invalid"><glossterm>INVALID</glossterm> <glossdef><para>Mark of invalid state of statement</para> </glossdef> </glossentry>
+	    <glossentry id="df_st_proposed"><glossterm>PROPOSED</glossterm> <glossdef><para>Mark of state of proposed use-case</para> </glossdef> </glossentry>
 	</sect2>
     </sect1>
 

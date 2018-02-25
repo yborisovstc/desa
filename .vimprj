@@ -33,8 +33,9 @@ doc=doc CD=. filter="*" {
  }
 }
 test=test CD=. filter="*.cpp *.h *.xml *.am" {
- ut_base.cpp
+  ut_base.cpp
   ut_main.cpp
+  ut_regex.cpp
   Makefile.am
   libs=.libs CD=. filter="*" {
    ut-fapws-lib
@@ -42,7 +43,12 @@ test=test CD=. filter="*.cpp *.h *.xml *.am" {
 }
 samples=samples CD=. filter="*.cpp *.h *.xml *.am" {
   mutag=mutag CD=. filter="*" {
-   ut-fapws-lib
+   Makefile
+   Makefile.am
+   Makefile.in
+   main.cpp
+   mutag
+   main.o
   }
 }
 }

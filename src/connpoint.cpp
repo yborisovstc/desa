@@ -217,3 +217,38 @@ bool Extention::IsCompatible(const MConnPoint& aPair, bool aExtd) const
     return res;
 }
 
+
+
+
+Socket::~Socket()
+{
+    for (auto comp : mPins) {
+	ConnPointBase* pin = comp.second;
+	delete pin;
+    }
+    mPins.clear();
+}
+
+bool Socket::IsCompatible(const MConnPoint& aPair, bool aExtd) const
+{
+    bool res = true;
+    const MExtension& ext = dynamic_cast<const MExtension&>(aPair);
+    const Socket& pair = dynamic_cast<const Socket&>(&ext ? ext.Orig() : aPair);
+    bool isext = &ext ? !aExtd : aExtd;
+    if (&pair != nullptr) {
+	for (auto comp : mPins) {
+	    if (pair.pins().count(comp.first) == 0) {
+		res = false; break;
+	    } else {
+		ConnPointBase* ppin = pair.pins().at(comp.first);
+		res = comp.second->IsCompatible(*ppin, isext);
+	    }
+	    if (!res) {
+		break;
+	    }
+	}
+    } else {
+	res = false;
+    }
+    return res;
+}

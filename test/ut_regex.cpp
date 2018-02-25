@@ -41,7 +41,15 @@ void Ut_Regex::tearDown()
     CPPUNIT_ASSERT_EQUAL_MESSAGE("tearDown", 0, 0);
 }
 
-typedef struct { int pos; char symbol;} TSourceElem;
+//typedef struct { int pos; char symbol;} TSourceElem;
+struct TSourceElem
+{
+    int pos; char symbol;
+    TSourceElem(int aPos, char aSymbol): pos(aPos), symbol(aSymbol) {};
+    TSourceElem(const TSourceElem& src): pos(src.pos), symbol(src.symbol) {};
+    bool operator==(const TSourceElem& s) const {return pos == s.pos && symbol == s.symbol;};
+};
+
 /**
  * @brief Source of text being processed. This state is not "right" state because it contain "count" state data that is not exposed.
  */

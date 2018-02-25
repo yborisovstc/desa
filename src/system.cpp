@@ -138,7 +138,7 @@ void System::DumpComps() const
 {
     cout << "[" << Name() << "]" << " components:" << endl;
     for (auto &comp: mComps) {
-	cout << "Name: " << comp.second->Name() << endl;
+	cout << &comp << ": " << comp.second->Name() << endl;
     }
     cout << endl;
 }

@@ -17,6 +17,10 @@ libdesa_la_SOURCES = \
 
 include_HEADERS = \
 		  miface.h \
+		  mconnpoint.h \
+		  connpoint.h \
+		  state.h \
+		  system.h \
 		  mdes.h
 
 

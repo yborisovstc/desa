@@ -422,12 +422,25 @@
 	       model is just a chain of clients-services.  This "simulation" of async system
 		can simplify the design of multi-agent. The question is how to implement such simulation using DES approach. Is it real design 
 		solution?</simpara>
-	    <simpara>As a request we can consider any getter, e.g. grayb Elem::GetNode().</simpara>
+	    <simpara>As a request we can consider any getter, e.g. grayb Elem::GetNode(). So let's imagine there is some subsystem (maybe state) that
+		has input "uri" and output "node". So we can connect "client" to input and get result from this subsystem output. But what is there are many
+		client for this service?</simpara>
+	    <simpara>Don't forget that normally subsystem is just "transformer", so if we need that sybsystem handles the "requests" we need to 
+		create special mechanism allowing connecting many clients to subsystem, ordering the data from clients, identifying the data from clients,
+		identifying output corresponding to particular client etc.</simpara>
 	</sect2>
 	<sect2><title>Dedicated Connection point for request</title>
 	    <simpara>One possible solution for async requests in DES is to have dedicated connection point for it. This point provides iface to set request's
 		signature (i.e. parameters). This point requres iface to set the result of the request.</simpara>
 	    <simpara>Conn point allows multiple connections so multiple clients can do requests to service system.</simpara>
+	    <simpara>If we extend this aproach we will come to the design of pool of subsystems handling multiple request: there is "multichannel" connpoint for
+		input_request/output_feedback, adding new channel to it causes creating also new handler. Accordingly, removing the connpoint channel causes removal
+		of handler. So many request to the system causes system itlsel increasing by new handler of the requests.
+	    </simpara>
+	    <simpara>Pros of this approach:</simpara>
+	    <itemizedlist>
+		<listitem>The handler of particular request is connected to requester, so any kind of request identification is not required.</listitem>
+	    </itemizedlist>
 	</sect2>
     </sect1>
 

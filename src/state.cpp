@@ -33,10 +33,10 @@ void State::Update()
 
 void State::Confirm()
 {
-    if (memcmp(Conf(), Upd(), Len()) || mUninit) {
+    if (IsChanged() || mUninit) {
 	ConnPoint* cp = dynamic_cast<ConnPoint*>(mOutput);
 	assert(cp != NULL);
-	memcpy(Conf(), Upd(), Len()); // Upd to Conf
+	ApplyChange(); // Upd to Conf
 	if (mOutput->IsConnected()) {
 	    NotifyOutputs(cp);
 	} else if (!mEnableDanglingOutput) {

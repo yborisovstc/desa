@@ -10,7 +10,8 @@ namespace desa {
 	public:
 	    enum TDir {
 		EInput = 1,
-		EOutput = 2
+		EOutput = 2,
+		EBidir = 3
 	    };
 	public:
 	    virtual TDir Dir() const = 0;
@@ -20,6 +21,12 @@ namespace desa {
 	    virtual void OnPairChanged(MConnPoint* aPair) = 0;
 	    virtual bool IsConnected() const = 0;
 	    virtual const MBase* MConnPoint_Base() const { return nullptr;};
+    };
+
+    class MExtension
+    {
+	public:
+	    virtual const MConnPoint& Orig() const = 0;
     };
 
 } // namespace desa
