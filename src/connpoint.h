@@ -1,6 +1,10 @@
 #ifndef __DESA_CONNPOINT__
 #define __DESA_CONNPOINT__
 
+/**
+ * Connection points
+ */
+
 #include <vector>
 #include <map>
 #include <mconnpoint.h>
@@ -18,8 +22,9 @@ namespace desa {
     {
 	public:
 	    typedef vector<const MConnPoint*> TPairs;
+	    static string type() { return "ConnPointBase";}
 	public:
-	    ConnPointBase(const string& aName, TDir aDir);
+	    ConnPointBase(const string& aName, TDir aDir, MBase* aCowner = nullptr);
 	    virtual ~ConnPointBase();
 	    // From MConnPoint
 	    virtual TDir Dir() const { return mDir;};
@@ -27,15 +32,17 @@ namespace desa {
 	    virtual bool Disconnect(const MConnPoint& aCp);
 	    virtual bool IsCompatible(const MConnPoint& aPair, bool aExtd = false) const;
 	    virtual void OnPairChanged(MConnPoint* aPair);
+	    virtual void OnMediatorChanged(MConnPoint* aMediator);
 	    virtual bool IsConnected() const override;
 	    virtual const MBase* MConnPoint_Base() const { return this;};
 	    // From MBase
-	    virtual const std::string GetUri() const;
+	    virtual const std::string getType() const { return type();}
+//	    virtual const std::string getUri() const;
 	protected:
 	    virtual bool DoConnect(const MConnPoint& aCp);
 	    virtual bool DoDisconnect(const MConnPoint& aCp);
-	    void Notify(MConnPoint* aExclude = NULL);
-	    virtual void Dump() const;
+	    virtual void Notify(MConnPoint* aExclude = NULL);
+	    virtual void Dump() const override;
 	protected:
 	    TDir mDir;
 	    TPairs mPairs;
@@ -53,13 +60,20 @@ namespace desa {
     class Extention: public ConnPointBase, public MExtension
     {
 	public:
-	    Extention(const string& aName, TDir aDir, ConnPointBase* aOrig): ConnPointBase(aName, aDir), mOrig(aOrig) {};
+	    static string type() { return "Extention";}
+	    Extention(const string& aName, MBase* aCowner, TDir aDir, ConnPointBase* aOrig):
+		ConnPointBase(aName, aDir, aCowner), mOrig(aOrig) {}
 	    virtual ~Extention();
 	    ConnPointBase& Orig() { return *mOrig; };
+	    virtual const std::string getType() const { return type();}
 	    // From MConnPoint
 	    const MConnPoint& Orig() const { return *mOrig; };
 	    // From MConnPoint
 	    virtual bool IsCompatible(const MConnPoint& aPair, bool aExtd = false) const override;
+	protected:
+	    // TODO Seems aExclude is not to be used. Remove it?
+	    virtual void Notify(MConnPoint* aExclude = nullptr);
+	    virtual void Dump() const override;
 	protected:
 	    ConnPointBase* mOrig; // Original conn point that is represented by extention, owned
     };
@@ -70,6 +84,9 @@ namespace desa {
      *
      * ConnPoint contains cache of required interfaces implementation, i.e. the state can get from
      * input ConnPoint the set of MState interfaces of all connected state outputs
+     * ConnPoint has it's direct pair but this direct pair can be "proxy" conn point, like extension
+     * In that case ConnPoint communicates to proxy in order to get the interfaces.
+     * This appoach allows to change connections net dynamically and refresh interfaces properly.
      */
     class ConnPoint: public ConnPointBase
     {
@@ -77,14 +94,15 @@ namespace desa {
 	typedef pair<const MConnPoint*, MIface*> TPairsIfacesElem;
 
 	public:
-	    ConnPoint(const string& aName, TDir aDir, MIface* aProvided = NULL);
+	    ConnPoint(const string& aName, MBase* aCowner, TDir aDir, MIface* aProvided = NULL):
+		ConnPointBase(aName, aDir, aCowner), mProvided(aProvided) {}
 	    virtual MIface& Provided() { return *mProvided;};
 	    virtual const MIface& Provided() const { return *mProvided;};
 	    virtual TPairsIfaces& Required() { return mRequired;}; 
 	    virtual const TPairsIfaces& Required() const { return mRequired;}; 
 	    // From MConnPoint
-	    virtual bool Connect(const MConnPoint& aCp);
-	    virtual bool Disconnect(const MConnPoint& aCp);
+	    virtual bool DoConnect(const MConnPoint& aCp);
+	    virtual bool DoDisconnect(const MConnPoint& aCp);
 	    virtual bool IsCompatible(const MConnPoint& aPair, bool aExtd = false) const;
 	    virtual void OnPairChanged(MConnPoint* aPair);
 	    virtual bool IsConnected() const override;
@@ -121,8 +139,8 @@ namespace desa {
 	typedef _Provided TProvided;
 
 	public:
-//	    TConnPoint(const string& aName, TDir aDir, MIface& aProvided): ConnPoint(aName, aDir, aProvided) {};
-	    TConnPoint(const string& aName, TDir aDir, TProvided* aProvided = NULL): ConnPoint(aName, aDir, aProvided) {};
+	    TConnPoint(const string& aName, MBase* aCowner, TDir aDir, TProvided* aProvided = NULL):
+		ConnPoint(aName, aCowner, aDir, aProvided) {};
 	    // From MConnPoint
 	    virtual bool IsCompatible(const MConnPoint& aPair, bool aExtd = false) const;
     };
@@ -191,8 +209,8 @@ namespace desa {
 	    typedef pair<const MIface*, T> TDataElem;
 	    typedef map<const MIface*, T> TData;
 	public:
-	    StateInput(const string& aName, MInputObserver& aObserver):
-		TConnPoint<MStateObserver<T>, MStateNotifier>(aName, MConnPoint::EInput, this),
+	    StateInput(const string& aName, MBase* aCowner, MInputObserver& aObserver):
+		TConnPoint<MStateObserver<T>, MStateNotifier>(aName, aCowner, MConnPoint::EInput, this),
 		mObserver(aObserver) {};
 	    const TData& Data() { return mData;};
 	    // From MStateObserver
@@ -201,7 +219,7 @@ namespace desa {
 		    mData.insert(TDataElem(aSource, aData));
 		} else { mData.at(aSource) = aData; }
 		mObserver.OnInputChanged();
-		MStateNotifier* intf = *aSource;
+		MStateNotifier* intf = dynamic_cast<MStateNotifier*>(aSource);
 		intf->OnStateChangeHandled(this);
 	    };
 	protected:
@@ -220,8 +238,8 @@ namespace desa {
 	    typedef pair<const MIface*, T> TDataElem;
 	    typedef map<const MIface*, T> TData;
 	public:
-	    StateMcInp(const string& aName, MInputObserver& aObserver):
-		TConnPoint<MStateObserver<T>, MStateNotifier>(aName, MConnPoint::EInput, this) {};
+	    StateMcInp(const string& aName, MBase* aCowner, MInputObserver& aObserver):
+		TConnPoint<MStateObserver<T>, MStateNotifier>(aName, aCowner, MConnPoint::EInput, this) {};
 	    const TData& Data() { return mData;};
 	    void attach(MInputObserver* aObs) {
 		for (auto obs: mObservers) assert(obs != aObs);
@@ -251,8 +269,8 @@ namespace desa {
     template<typename T> class StateOutput: public TConnPoint<MStateNotifier, MStateObserver<T>>
     {
 	public:
-	    StateOutput(const string& aName, MStateNotifier& aNotifier):
-		TConnPoint<MStateNotifier, MStateObserver<T>>(aName, aNotifier) {};
+	    StateOutput(const string& aName, MBase* aCowner, MStateNotifier& aNotifier):
+		TConnPoint<MStateNotifier, MStateObserver<T>>(aName, aCowner, aNotifier) {};
     };
 
 
@@ -280,8 +298,8 @@ namespace desa {
     template<typename T> class ExtStateInp: public Extention
     {
 	public:
-	    ExtStateInp(const string& aName): Extention(aName, EInput,
-		    new TConnPoint<MStateNotifier, MStateObserver<T>>("Int", EOutput)) {
+	    ExtStateInp(const string& aName, MBase* aCowner): Extention(aName, aCowner, EInput,
+		    new TConnPoint<MStateNotifier, MStateObserver<T>>("Int", this, EOutput)) {
 	    }
     };
 
@@ -291,9 +309,8 @@ namespace desa {
     template<typename T> class ExtStateOut: public Extention
     {
 	public:
-	    ExtStateOut(const string& aName): Extention(aName, EOutput,
-		    mOrig = new TConnPoint<MStateObserver<T>, MStateNotifier>("Int", EInput)) {
-			    }
+	    ExtStateOut(const string& aName, MBase* aCowner): Extention(aName, aCowner, EOutput,
+		    mOrig = new TConnPoint<MStateObserver<T>, MStateNotifier>("Int", this, EInput)) {}
     };
 
 
@@ -306,15 +323,42 @@ namespace desa {
 	public:
 	    typedef pair<string, ConnPointBase*> TPinsElem;
 	    typedef map<string, ConnPointBase*> TPins;
+	    static string type() { return "Socket";}
 	public:
-	    Socket(const string& aName, TDir aDir): ConnPointBase(aName, aDir) {}
+	    Socket(const string& aName, MBase* aCowner, TDir aDir): ConnPointBase(aName, aDir, aCowner) {}
 	    virtual ~Socket();
+	    virtual const std::string getType() const { return type();}
 	    // From MConnPoint
+	    virtual bool DoConnect(const MConnPoint& aCp);
 	    virtual bool IsCompatible(const MConnPoint& aPair, bool aExtd = false) const override;
 	protected:
+	    MConnPoint* pinAt(const string& key) const { return mPins.at(key);}
 	    const TPins& pins() const { return mPins;}
+	    void addPin(const string& aName, ConnPointBase* aPin) { mPins.insert(TPinsElem(aName, aPin));}
 	protected:
 	    TPins mPins;
+    };
+
+    /**
+     * @brief Socket containing just two pins. One pin compatible to state input, another to output
+     * Note that both pins are extenstions. This is because we need double-ended pin in orider to get
+     * point-to-point connection between state's inputs and outputs.
+     */
+    template <class inp_type, class out_type>
+	class StateIo: public Socket
+    {
+	public:
+	    typedef inp_type TInpType;
+	    typedef out_type TOutType;
+	    static string type() { return "StateIo";}
+
+	    StateIo(const string& aName, MBase* aCowner, const string& aInpName, const string& aOutName): Socket(aName, aCowner, EBidir) {
+		addPin(aInpName, mInp = new ExtStateInp<TInpType>("Inp", this));
+		addPin(aOutName, mOut = new ExtStateOut<TOutType>("Out", this));
+	    }
+	    virtual const std::string getType() const { return type();}
+	    Extention* mInp;
+	    Extention* mOut;
     };
 
 } // namespace desa

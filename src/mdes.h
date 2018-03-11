@@ -9,18 +9,30 @@ namespace desa {
 
     using namespace std;
 
+
+    /**
+     * @brief Common owner. Abstraction of generic owner-owning relationship
+     */
+    class MCowner: public MIface
+    {
+	public:
+	    virtual const MCowner* owner() const = 0;
+    };
+    
     /**
      * @brief Base, support naming
      */
     class MBase
     {
 	public:
-	    MBase(const string& aName): mName(aName) {};
+	    MBase(const string& aName, MBase* aCowner = nullptr): mName(aName), mCowner(aCowner) {};
 	    virtual ~MBase() {};
-	    virtual const std::string& Name() const { return mName;};
-	    virtual const std::string GetUri() const { return std::string();};
+	    virtual const std::string getType() const { return std::string();}
+	    virtual const std::string& Name() const { return mName;}
+	    virtual const std::string getUri() const { return (mCowner ? mCowner->getUri() : std::string()) + "/" + getType() + ":" +  Name();}
 	protected:
 	    string mName;
+	    MBase* mCowner;
     };
 
     /**
@@ -101,13 +113,6 @@ namespace desa {
 	    Comp(const string& aName): MBase(aName), mOwner(NULL) {};
 	    Comp(const string& aName, MOwner* aOwner): MBase(aName), mOwner(aOwner) {};
 	    void SetOwner(MOwner* aOwner) { assert(mOwner == NULL); mOwner = aOwner;};
-	    virtual const std::string GetUri() const override {
-		if (mOwner == nullptr) return "/";
-		const MBase* owner = mOwner->GetBase();
-		std::string uri = (owner != nullptr) ? owner->GetUri(): "?";
-		uri.append("/"); uri.append(Name());
-		return uri;
-	    };
 	protected:
 	    MOwner* mOwner;
     };

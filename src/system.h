@@ -27,6 +27,7 @@ namespace desa {
 	typedef set<MComp*> TCompsSet;
 	friend class Owner;
 	friend class Comp;
+	static string type() { return "System";}
 
 	enum TDesState {
 	    ESt_Unknown = 0,
@@ -44,7 +45,7 @@ namespace desa {
 		    virtual void OnCompUpdated(MComp* aComp) { mHost.HandleCompUpdated(aComp);};
 		    virtual void OnCompConfirmed(MComp* aComp) { mHost.HandleCompConfirmed(aComp);};
 		    // From MIface
-		    virtual const MBase* GetBase() const {  return dynamic_cast<const MBase*>(&mHost);};
+		    virtual const MBase* base() const {  return dynamic_cast<const MBase*>(&mHost);};
 		protected:
 		    System& mHost;
 	    };
@@ -57,6 +58,7 @@ namespace desa {
 	    void HandleCompActivated(MComp* aComp);
 	    void HandleCompUpdated(MComp* aComp);
 	    void HandleCompConfirmed(MComp* aComp);
+	    virtual const std::string getType() const { return type();}
 	    // From MComp
 	    virtual void Update();
 	    virtual void Confirm();

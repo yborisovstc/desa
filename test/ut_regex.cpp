@@ -88,7 +88,8 @@ void Source::Confirm()
 class AtomOneChar: public TState<TSourceElem>
 {
     public:
-	AtomOneChar(const string& aName, char aPattern): TState<TSourceElem>(aName, NULL, {-1, 0}), mInp("Inp", mSobs), mInpPresursor("InpPresursor", mSobs),
+	AtomOneChar(const string& aName, char aPattern): TState<TSourceElem>(aName, NULL, {-1, 0}),
+	    mInp("Inp", this, mSobs), mInpPresursor("InpPresursor", this, mSobs),
 	    mPattern(aPattern) {};
 	virtual void Trans() override;
     public:
@@ -139,7 +140,8 @@ void AtomOneChar::Trans()
 class MultiBase: public TState<TSourceElem>
 {
     public:
-	MultiBase(const string& aName): TState<TSourceElem>(aName, NULL, {-1, 0}), mInp("Inp", mSobs), mInpPresursor("InpPresursor", mSobs) {};
+	MultiBase(const string& aName): TState<TSourceElem>(aName, NULL, {-1, 0}),
+	    mInp("Inp", this, mSobs), mInpPresursor("InpPresursor", this, mSobs) {};
     public:
 	StateInput<TSourceElem> mInp;
 	StateInput<TSourceElem> mInpPresursor;
@@ -262,7 +264,8 @@ void Ut_Regex::test_ConcatTwoOneChar()
 class Count: public TState<int>
 {
     public:
-	Count(const string& aName, int aMatchCnt): TState<int>(aName, NULL, 0), mMatchCnt(aMatchCnt), mInp("Inp", mSobs), mSelf("Self", mSobs) {};
+	Count(const string& aName, int aMatchCnt): TState<int>(aName, NULL, 0),
+	mMatchCnt(aMatchCnt), mInp("Inp", this, mSobs), mSelf("Self", this, mSobs) {};
 	virtual void Trans() override {
 	    auto &inp = mInp.Data().begin()->second.pos;
 	    auto &self = mSelf.Data().begin()->second;
@@ -285,7 +288,7 @@ class MultiExactSwitch: public TState<TSourceElem>
 {
     public:
 	MultiExactSwitch(const string& aName, int aMatchCnt): TState<TSourceElem>(aName, NULL, {-1, 0}), mMatchCnt(aMatchCnt),
-	    mInp("Inp", mSobs), mInpCount("InpCount", mSobs) {};
+	    mInp("Inp", this, mSobs), mInpCount("InpCount", this, mSobs) {};
 	virtual void Trans() override {
 	    auto &inp = mInp.Data().begin()->second;
 	    auto &cnt = mInpCount.Data().begin()->second;
@@ -318,7 +321,7 @@ class MultiExact: public System
 }; 
 
 MultiExact::MultiExact(const string& aName, MOwner* aOwner, int aMatchCnt): System(aName, aOwner), mMatchCnt(aMatchCnt), 
-    mInp("Inp"), mOut("Out")
+    mInp("Inp", this), mOut("Out", this)
 {
     AddComp(mCount = new Count("Count", mMatchCnt));
     AddComp(mSwitch = new MultiExactSwitch("Switch", mMatchCnt));

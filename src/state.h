@@ -20,8 +20,9 @@ namespace desa {
 	public:
 	    typedef set<MIface*> TIfSet; // Set of ifaces
 
-	friend class InputObserver;
-	friend class StateNotifier; 
+	    friend class InputObserver;
+	    friend class StateNotifier; 
+	    static string type() { return "State";}
 	protected:
 	    class InputObserver: public MInputObserver {
 	    public:
@@ -52,9 +53,10 @@ namespace desa {
 	    // From MComp
 	    virtual void Update();
 	    virtual void Confirm();
-	    virtual const MBase* GetBase() const {  return dynamic_cast<const MBase*>(this);};
+	    virtual const MBase* base() const {  return dynamic_cast<const MBase*>(this);};
 	    operator MInputObserver*() {return &mSobs;}
 	protected:
+	    virtual const std::string getType() const { return type();}
 	    virtual void Trans() {};
 	    //virtual void* Conf() { return NULL;};
 	    //virtual void* Upd() { return NULL;};
@@ -124,7 +126,7 @@ namespace desa {
 	    //};
 	    TState(const string& aName, MOwner* aOwner, const T& aData):
 		State(aName, aOwner), mConf(aData), mUpd(aData), mData(*this) {
-		    mOutput = new TConnPoint<MStateNotifier, MStateObserver<T>>("Out", MConnPoint::EOutput, mSntf);
+		    mOutput = new TConnPoint<MStateNotifier, MStateObserver<T>>("Out", this, MConnPoint::EOutput, &mSntf);
 		};
 	    virtual ~TState() {};
 	    inline operator const T&() const { return mConf;};
@@ -149,7 +151,7 @@ namespace desa {
 	    };
 	    */
 	    virtual void DoNotifyOutput(MIface* aObserver) {
-		MStateObserver<T>* obs = *aObserver;
+		MStateObserver<T>* obs = dynamic_cast<MStateObserver<T>*>(aObserver);
 		obs->OnStateChanged(&mSntf, mConf);
 	    };
 	protected:

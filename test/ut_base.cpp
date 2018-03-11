@@ -75,7 +75,7 @@ class IncrementorState: public TState<int>
 
 
 IncrementorState::IncrementorState(const string& aName, const int& aData, MOwner* aOwner): TState<int>(aName, aOwner, aData),
-    mInp("Inp", mSobs), mInc(1), mLim(4)
+    mInp("Inp", this, mSobs), mInc(1), mLim(4)
 {
 }
 
@@ -152,8 +152,8 @@ class Syst2: public Syst1
 };
 
 Syst2::Syst2(const string& aName, MOwner* aOwner): Syst1(aName, aOwner) {
-    mInp = new ExtStateInp<int>("Inp"); 
-    mOut = new ExtStateOut<int>("Out"); 
+    mInp = new ExtStateInp<int>("Inp", this); 
+    mOut = new ExtStateOut<int>("Out", this); 
     bool res = Disconnect(mIncr->Input(), mIncr->Output());
     CPPUNIT_ASSERT_MESSAGE("Fail to disconnect inp to output", res);
     res = Connect(mIncr->Input(), mInp->Orig());
@@ -190,7 +190,7 @@ class EventsGenerator: public TState<int>
 {
     public:
 	EventsGenerator(const int& aData, MOwner* aOwner = NULL):
-	    TState<int>("Evg", aOwner, aData), mInp("Inp", mSobs), mInpCount("InpCount", mSobs) {};
+	    TState<int>("Evg", aOwner, aData), mInp("Inp", this, mSobs), mInpCount("InpCount", this, mSobs) {};
 	ConnPointBase& Input() { return mInp;};
 	ConnPointBase& InpCount() { return mInpCount;};
 	virtual void Update();
@@ -240,7 +240,7 @@ void EventsGenerator::Confirm()
 class Incr2: public TState<int>
 {
     public:
-	Incr2(const int& aData, MOwner* aOwner = NULL): TState<int>("Incr", aOwner, aData), mInp("Inp", mSobs) {};
+	Incr2(const int& aData, MOwner* aOwner = NULL): TState<int>("Incr", aOwner, aData), mInp("Inp", this, mSobs) {};
 	ConnPointBase& Input() { return mInp;};
 	virtual void Update();
 	virtual void Confirm();

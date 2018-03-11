@@ -128,7 +128,7 @@
 		<imagedata fileref="pics/desa_change_content.jpg"/> </imageobject></figure>
     </sect1>
 
-    <sect1 id="ds_conn"><title>Is Connection class needed as specific artifact of connection or references to pair is enough?
+    <sect1 id="ds_iccn"><title>Is Connection class needed as specific artifact of connection or references to pair is enough?
 	</title>
 	<sect2><title>Intro</title>
 	    <simpara>Currently in <xref linkend="gls_fapws"/> project specific class CAE_ConnBase for connection.
@@ -302,8 +302,8 @@
 	</sect2>
     </sect1>
 
-    <sect1 id="id_conn"><title>Connections</title>
-	<sect2 id="id_conn_cpt"><title>Compatibility</title>
+    <sect1 id="ds_conn"><title>Connections</title>
+	<sect2 id="ds_conn_cpt"><title>Compatibility</title>
 	    <sect3><title>Intro</title>
 		<simpara>Ref <ulink url="rq_cpcmp"/> for the requirements. According to the requirement the connection points needs to be 
 		compatible to be connected. What the compatibility can be based on? What would be approaches of checking the compatibility?</simpara>
@@ -337,6 +337,28 @@
 	    <sect3><title>Connection point is needed for dynamic configuration of the connections.</title>
 		<simpara>There is use-case when connection should be established in the scope of DES system running, i.e. some
 		state transition function can update connection (or data of connection) as state's data.</simpara>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_conn_chain"><title>Creating point-to-point connection: chain of connections</title>
+	    <simpara>Almost all connections in DES are point-to-point: output to input, etc. On another hand this is not just simple connection
+		one point to another but configured chain of connections, so many connection points are participated in that chain.
+		The chain links are connections but links joints are special connection points, Extension in example.</simpara>
+	    <sect3><title>Why do we need such connection on form of chain? </title>
+		<simpara>This allows us to create complex topology of connections, supporting hierarchy of
+		    systems where internal system state output connects to system output that in turn connects to another system input etc. </simpara>
+		<simpara>Also the main capability of connection is the mechanism of enlargement. We should be allowed to create any flexible 
+		topology of connection. One example is simple extension of connection.</simpara>
+	    </sect3>
+	    <sect3 id="ds_conn_chain_mdt"><title>Why do we need mechanism of mediators?</title>
+		<simpara>One of the reasons is that we need to support directional connections, like input-to-output. So each conn point in the chain
+		    has to understand that from on side it is connected to "source" and from another - to "destination". Here we apply the 
+		    proved approach, where connection itself is not directional but conn points themselfs play role of "source" and "destination". </simpara>
+		<simpara>Mediator plays role of glue that binds partial p-to-p connection to the chain:</simpara>
+		<programlisting>
+		     |    1st p-to-p          mediator   2nd p-to-p
+		     |  CP1=======CP2----------->CP3==================CP4
+		</programlisting>
+		<simpara>Relation to mediator is directional (asymmetric).</simpara>
 	    </sect3>
 	</sect2>
     </sect1>
