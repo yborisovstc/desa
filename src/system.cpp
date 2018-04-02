@@ -23,6 +23,14 @@ System::~System()
     }
 }
 
+MIface *System::DoGetObj(const char *aName)
+{
+    if (aName == MComp::type())
+	return this;
+    else
+	return Comp::DoGetObj(aName);
+}
+
 void System::HandleCompActivated(MComp* aComp)
 {
     mStatusNext->push_back(aComp);

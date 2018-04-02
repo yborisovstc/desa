@@ -22,6 +22,13 @@ State::~State()
     }
 };
 
+MIface *State::DoGetObj(const char *aName)
+{
+    if (aName == MComp::type())
+	return this;
+    else
+	return Comp::DoGetObj(aName);
+}
 
 void State::Update()
 {
@@ -80,9 +87,10 @@ void State::HandleStateChangeHandled(MIface* aObserver)
 
 void State::NotifyOutputs(ConnPoint* aOutput)
 {
-    int cnt = aOutput->Required().size();
+    MJointPr* out = aOutput->GetObj(out);
+    int cnt = out->Required().size();
     mOutputsNotified = false;
-    for (auto& iobs : aOutput->Required()) {
+    for (auto& iobs : out->Required()) {
 	mNotifUnconfirmed.insert(iobs.second);
 	if (--cnt == 0) {
 	    mOutputsNotified = true;

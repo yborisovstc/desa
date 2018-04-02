@@ -41,6 +41,7 @@ namespace desa {
     class MComp: public MIface
     {
 	public:
+	    static const char* type() { return "MComp";}
 	    virtual void Update() = 0;
 	    virtual void Confirm() = 0;
     };
@@ -74,6 +75,7 @@ namespace desa {
     template<typename T> class MStateObserver: public MIface
     {
 	public:
+	    static const char* type() {return "MStateObserver";}
 	    virtual void OnStateChanged(MIface* aSource, const T& aStateData) = 0;
 
     };
@@ -93,6 +95,7 @@ namespace desa {
     class MStateNotifier: public MIface
     {
 	public:
+	    static const char* type() {return "MStateNotifier";}
 	    virtual void OnStateChangeHandled(MIface* aObserver) = 0;
     };
 

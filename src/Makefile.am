@@ -10,6 +10,8 @@ libdesa_la_SOURCES = \
 		       mdes.h \
 		       connpoint.h \
 		       connpoint.cpp \
+		       trans.h \
+		       trans.cpp \
 		       system.h \
 		       system.cpp \
 		       state.h \

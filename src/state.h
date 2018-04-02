@@ -23,6 +23,7 @@ namespace desa {
 	    friend class InputObserver;
 	    friend class StateNotifier; 
 	    static string type() { return "State";}
+	    virtual MIface *DoGetObj(const char *aName) override;
 	protected:
 	    class InputObserver: public MInputObserver {
 	    public:
@@ -35,6 +36,8 @@ namespace desa {
 	    class StateNotifier: public MStateNotifier {
 		public:
 		    StateNotifier(State& aHost): mHost(aHost) {};
+		    static const char* Type() { return "StateNotifier";}
+		    virtual MIface *DoGetObj(const char *aName) override {if (aName == Type()) return this; else return nullptr;}
 		    // From MStateNotifier
 		    virtual void OnStateChangeHandled(MIface* aObserver) { mHost.HandleStateChangeHandled(aObserver);};
 		private:
@@ -56,7 +59,7 @@ namespace desa {
 	    virtual const MBase* base() const {  return dynamic_cast<const MBase*>(this);};
 	    operator MInputObserver*() {return &mSobs;}
 	protected:
-	    virtual const std::string getType() const { return type();}
+	    virtual const std::string GetType() const { return type();}
 	    virtual void Trans() {};
 	    //virtual void* Conf() { return NULL;};
 	    //virtual void* Upd() { return NULL;};
@@ -109,24 +112,11 @@ namespace desa {
      */
     template<typename T> class TState: public State
     {
-	friend class TData;
-	protected:
-	    class TData: public MData<T>
-	{
-	    public:
-		TData(TState<T>& aHost): mHost(aHost) {};
-		virtual const T& Data() const { return mHost.mConf;};
-	    private:
-		TState<T>& mHost;
-	};
 	public:
 	    // Disabling undefined value, ref uc_006 invalidated
-	    // TState(const string& aName): State(aName, nullptr), mData(*this) {
-	    //	    mOutput = new TConnPoint<MStateNotifier, MStateObserver<T>>("Out", MConnPoint::EOutput, mSntf);
-	    //};
 	    TState(const string& aName, MOwner* aOwner, const T& aData):
-		State(aName, aOwner), mConf(aData), mUpd(aData), mData(*this) {
-		    mOutput = new TConnPoint<MStateNotifier, MStateObserver<T>>("Out", this, MConnPoint::EOutput, &mSntf);
+		State(aName, aOwner), mConf(aData), mUpd(aData) {
+		    mOutput = new StateOutput<T>("Out", this, mSntf);
 		};
 	    virtual ~TState() {};
 	    inline operator const T&() const { return mConf;};
@@ -153,9 +143,8 @@ namespace desa {
 	    virtual void DoNotifyOutput(MIface* aObserver) {
 		MStateObserver<T>* obs = dynamic_cast<MStateObserver<T>*>(aObserver);
 		obs->OnStateChanged(&mSntf, mConf);
-	    };
+	  };
 	protected:
-	    TData mData;
 	    T mConf; // Confirmed data
 	    T mUpd;  // Updated data
     };

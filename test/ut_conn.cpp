@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include "state.h"
+#include "trans.h"
 #include "system.h"
 #include <iostream>
 #include <thread>
@@ -55,19 +56,61 @@ class SubcIncr: public TState<int>
 	int mLim;
 };
 
+/**
+ * @brief State of incrementors connected
+ * It is MNbCpClient so listens response from connpoints being connected. 
+ * Change state to true as soon of positive response
+ */
+class SubcRootInitConn: public TState<bool>
+{
+    public:
+	SubcRootInitConn(const string& aName, const bool& aData): TState<bool>(aName, nullptr, aData) {}
+	void onConnected(bool aRes) {
+	    cout << "onConnected, aRes = " << aRes << endl;
+	    mUpd = true;
+	}
+	// Transition
+	virtual void Trans() {
+	}
+};
+
 class SubcRoot: public System
 {
     public:
-	SubcRoot(const string& aName): System(aName, nullptr) {
+	class trOnConnect: public Tr1<SubcRoot, bool> { public: trOnConnect(SubcRoot& a0): Tr1<SubcRoot, bool>(a0) {}
+	    static Tr<bool>* get(SubcRoot& a0) { return new trOnConnect(a0);}
+	    virtual void tr(const bool& aRes) override {
+		m0.mConn->onConnected(aRes);
+	    } };
+
+	class sOnConnect: public Stf<SubcRoot, bool> { public: sOnConnect(SubcRoot* ac): Stf<SubcRoot, bool>(ac) {};
+	    virtual void tr(const bool& aI) override {
+		c->mConn->onConnected(aI);
+	    } };
+
+    public:
+	SubcRoot(const string& aName): System(aName, nullptr), mS1(nullptr), mS2(nullptr) {
+	    AddComp(mConn = new SubcRootInitConn("Conn", false));
 	    AddComp(mS1 = new SubcIncr("S1", 4, 30));
 	    AddComp(mS2 = new SubcIncr("S2", 2, 60));
+	    ConnPointBase& o1 = mS1->Output();
+	    ConnPointBase& i2 = mS2->mInp;
+	    //auto handler = [this] (bool aRes) {this->mConn->onConnected(aRes);};
+	    //o1.connect(i2, new function<void (bool)>(handler));
+	    //o1.connect(i2, trOnConnect::get(*this));
+	    auto* cb = new sOnConnect(this);
+	    o1.isCompatible(i2, false, cb);
+	    //o1.connect(i2, cb);
 	}
+	SubcRootInitConn* mConn;
 	SubcIncr* mS1;
 	SubcIncr* mS2;
 };
 
 void Ut_Conn::test_SimpleUbc()
 {
+
+
     printf("\n === Test of simple unblocking connection\n");
     SubcRoot syst("Root");
     syst.Run();

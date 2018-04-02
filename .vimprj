@@ -9,15 +9,20 @@ README
 NEWS
 libdesa.pc.in
 src=src CD=. filter="*.h *.cpp *.dtd Makefile.am" {
- connpoint.h
+  connpoint.h
   mconnpoint.h
+  mconnpointnb.h
   mdes.h
   miface.h
+  nbconnpoint.h
   state.h
   system.h
+  trans.h
   connpoint.cpp
+  nbconnpoint.cpp
   state.cpp
   system.cpp
+  trans.cpp
   Makefile.am
 } 
 etc=etc CD=. filter="*" {
@@ -34,6 +39,7 @@ doc=doc CD=. filter="*" {
 }
 test=test CD=. filter="*.cpp *.h *.xml *.am" {
   ut_base.cpp
+  ut_conn.cpp
   ut_main.cpp
   ut_regex.cpp
   Makefile.am

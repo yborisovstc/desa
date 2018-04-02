@@ -62,6 +62,11 @@
 	    <glossdef> <para>Finite Automata Programming Workspace</para> <para>
 		    Initial project dedicated to creation C++ API for <xref linkend="gls_des"/>.
 		    Ref <ulink url="../../../fapws"/> </para></glossdef> </glossentry>
+	<glossentry id="gls_cco"><glossterm>CCO</glossterm> <acronym>CCO</acronym>
+	    <glossdef> <para>Common context for non blocking operation - 
+		    approach for non-blocking interaction between objects where the conext is initially prepared for the whole
+		    operation, so the operation can be created in the form of class with attributes as context and methods as callbacks.
+		    Ref <xref linkend="ds_smcsc_cco"/> for details.</para></glossdef> </glossentry>
     </glossary>
 
     <sect1 id="ds_intro"> <title>Introduction</title>
@@ -437,7 +442,7 @@
 	</sect2>
     </sect1>
 
-    <sect1 id="ds_areq"><title>Asynchronous requests</title>
+    <sect1 id="ds_areq"><title>Asynchronous requests - client/server approach.</title>
 	<sect2><title>Intro</title>
 	    <simpara>One kind of interfaces of async system would be so called async requests. This happens when we consider async system not as 
 		DES but as regular C++ object that offers some interfaces for issuing request to the object. In fact the most usual native SW programming
@@ -463,6 +468,105 @@
 	    <itemizedlist>
 		<listitem>The handler of particular request is connected to requester, so any kind of request identification is not required.</listitem>
 	    </itemizedlist>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_cpubi"><title>Connection points for Unblocked interaction</title>
+	<sect2><title>Intro</title>
+	    <simpara>Ref <ulink url="../../../desmag/doc/design/index.html#ds_asub"/> for discussion of unblocked interactions.</simpara>
+	    <simpara>Actually the idea of using of events systems is to provide mechanism of such unblocked interactions. But at the moment (d4de8b103d76b2cd)
+		the connection points interactions is blocking. So CP as core part of DES is blocking itself that preevents creating unblocking systems based
+		on DES. We need to provide unblocking conn point mechanism.</simpara>
+	    <simpara>There can be the foolowing approaches considered:</simpara>
+	    <itemizedlist>
+		<listitem>To have both blocking and unblocking CP, ref <xref linkend="ds_cpubi_bbu"/></listitem>
+		<listitem>To have only unblocking CP based on state machine, ref <xref linkend="ds_cpubi_ousm"/></listitem>
+	    </itemizedlist>
+	</sect2>
+	<sect2 id="ds_cpubi_bbu"><title>Approach: to have both blocking and unblocking CP</title>
+	    <simpara>Blocking CP is still usable in case connection/disconnection can be done in blocking manner. For instance for connecting CP of states
+		running in one thread.
+	    </simpara>
+	</sect2>
+	<sect2 id="ds_cpubi_ousm"><title>Approach: having only unblocking CP based on callbacks state machine</title>
+	    <sect3><title>Intro</title>
+		<simpara>Ref <xref linkend="ds_smcsc"/> for design of state machine besed on callback with stored context.</simpara>
+	    </sect3>
+	    <sect3><title>How to process responce from request handler?</title>
+		Connpoints interactions are managed by owned system. Thus this system initiates conn points interaction (for instance request one CP connect to
+		another CP) and correspondigly receives response from conn point. How to process this response. In our case it is simple for system is DES so
+		has unblocking nature. System just needs to have response handling state and  assosiate some input of handling state to the response.
+		The response then updates the input properly that causes hadling state transition. 
+	    </sect3>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_smcsc"><title>State machine based on callback with stored context.</title>
+	<sect2><title>Intro</title>
+	    <simpara>There are many technics of implementing state machine. Here one of them is being considered.</simpara>
+	    <simpara>Let's assume that the system is combined from the objects. Each object in our case is implemented with normal
+		C++ class. The class can be considered as state machine - it contains internal state (attributes, we also will call it "context")
+		and transitons (methods).  Assuming that the classes interaction is not blocking, i.e. any initial transition (method) of some class 
+		can initiate anoter class context change via invoking this state method but class initator doesn't wait the method's return data, instead, it passes
+		callback function to method, so class handler invokes this call back on the method fulfilled (transition done). The initiator shares it's context
+		with callback, including the initial method local variables, so the callback can be cosidered as another transition the context with 
+		taking to account hadler state passed as arguments of callback. </simpara>
+	    <simpara>This interaction can be simply interpret in the terms of state machine, ref the diagram below:</simpara>
+	    <figure id="fig_smcb"><imageobject> <imagedata fileref="pics/desa_sm_callback_based.jpg"/> </imageobject></figure>
+	    <simpara>Class-initiator passed its callback to the initial method - this callback can be interpreted as a notification to 
+		next state (class-initiator initial transition continuation) of handler method output updated, where callback argument
+		is an input of input of next state. This notification also can be considered as just input that we update in order to next transition.</simpara>
+	    <simpara>Note, that the interface in that case is the set of such "inputs".</simpara>
+	    <simpara>The connection of states is being performed dynamically: current state transition creates next state inputs</simpara>
+	    <simpara>We can consider some design approaches here:</simpara>
+	    <itemizedlist>
+		<listitem>Functor with partial context, ref <xref linkend="ds_smcsc_fpc"/></listitem>
+		<listitem>common context for non blocking operation, ref <xref linkend="ds_smcsc_cco"/></listitem>
+	    </itemizedlist>
+	</sect2>
+	<sect2 id="ds_smcsc_fpc"><title>Approach: Functor with partial context</title>
+	    <simpara>We can introduce interface of state - just one transition fucntion. Then we can define such state as class that implements this interface
+		(note that this class is actually a closure). This class constructor gets inputs and input to the next state (states). Passing the input
+		to the state is act of connection the state output to next state input. </simpara>
+	    <sect3><title>State desing in case of using states for existing C++ system re-implementation</title>
+		<simpara>In many cases we use this design to re-implement some standard C++ system (set of interacting classes) in orider to 
+		    support async non-blosking system. In that case the states are used only for implement class methods procedure. This means that
+		    we needs to consider class attributes as "persistent" part of states. There is another part, not repsistent, transient that is
+		    counterpart of stack variables of the class method. State also needs to use this class method and other class methods in scope
+		    of transition. This means the state needs to have class as a context. The context keeps persistent part of overall system "status" and
+		    utility methods.</simpara>
+		<simpara>Why this "combined" design is used? This is because the direct movement (the movement that moves class local status) can
+		be simply done by class method, but handling result from async non-bloking requests to another classes is better do in states. </simpara>
+		<simpara>In this case the constructor of state shall get context, inputs and connection to next state.</simpara>
+		<simpara>Methods of class also needs to be modified. Many of them needs to get inputs to state (states)(in many cases the states are to get
+		    callback) in order to continue the calculation process. So the modified class interface will consists of the regular methods, some (or many)
+		    of them gets next state (callback) as attribute.</simpara>
+	    </sect3>
+	    <sect3><title>What if we want to create system from scrath using states only?</title>
+	    </sect3>
+	</sect2>
+	<sect2><title>Why do we need to pass interim contex (local variables) from initial transition to callback?</title>
+	    <simpara>Because more that one "clients" can invoke handling methods. So "movement" in handling method depends on mehod arguments
+		(can differs for clients). In case if only one client is allowed then the local content can be moved to "global" level - to 
+		handling class attributes. Compare this with <xref linkend="ds_areq"/>. We call initiator "client" because this kind of interaction
+		looks similar to client-server architecture - client initiates the interaction.</simpara>
+	    <simpara>There can be another approach used: we can register clients and then keep clients related contens in class context. In that case
+		we don't need to pass the local context to callback - it can take it from client related context. We also need to propagte client id to each
+		secondary request.</simpara>
+	</sect2>
+	<sect2><title>Why not use same approach for connection in DES?</title>
+	    <simpara>As it was mentioned callback based state machine doesn't use dedicated connections. Instead the connection for output is
+		set as callback when the state is created.</simpara>
+	    <simpara>Does is make sense to use same approach for DES instead of dedicated connection points?</simpara>
+	</sect2>
+	<sect2 id="ds_smcsc_cco"><title>Approach modification: common context for non blocking operation (<xref linkend="gls_cco"/>)</title>
+	    <sect3><title>Intro</title>
+		<simpara>Initially we attempt the approach "Functor with partial context", ref <xref linkend="ds_smcsc_fpc"/>. In that approach we
+		    store just partial context in the callback function, the context that needed for callback procedure itselt. So each callback needs to 
+	       create next callback, pass the partial context for it's contstuctor, invoke request to another object  passing the callback to the operation.</simpara>
+	   <simpara>What if we from beginning use the class that contains the whole context (all local data in regular sycnronous operation) and then
+	   add all the callbacks as method of that class. In this case all callbacks by default has access to context.</simpara>
+	    </sect3>
 	</sect2>
     </sect1>
 

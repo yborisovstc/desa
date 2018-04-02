@@ -2,21 +2,39 @@
 #define __DESA_IFACE__
 
 #include <string>
+#include "trans.h"
 
 namespace desa {
 
-    /*
-     * Interface of interface. Support unified invocation of methods
-     */
+    class MIface;
 
-    class MBase;
-    class MIface
+    class MIfProvider
     {
 	public:
-//	    template<typename T> operator T*() { return dynamic_cast<T*>(this);};
-//	    template<typename T> operator const T*() const { return dynamic_cast<const T*>(this);};
+	    template <class T> T* GetObj(T* aInst) {return aInst = dynamic_cast<T*>(DoGetObj(aInst->type()));};
+	    // TODO to make abstract. undefined ref atm
+	    // TODO to have const version
+	    virtual MIface *DoGetObj(const char* aTypeName) { return nullptr;}
+	    void doGetObj(const char* aTypeName, Tr<MIface>* aNext) {
+		MIface* res = DoGetObj(aTypeName);
+		(*aNext)(*res);
+	    }
+	    /*
+	    void doGetObj(const char* aTypeName, std::function<void(MIface*)>* aNext) {
+		MIface* res = DoGetObj(aTypeName);
+		(*aNext)(res);
+	    }
+	    */
+    };
+
+
+    class MIface: public MIfProvider
+    {
+	public:
+	    static const char* type() {return "MIface";}
+	    virtual const std::string GetIfType() const {return type();}
+	    virtual void getIfType(Tr<std::string>* aCb) const { (*aCb)(type());}
 	    virtual void Call(const std::string& aSpec) {};
-//	    virtual const MBase* base() const { return nullptr;};
 
     };
 

@@ -40,6 +40,8 @@ namespace desa {
 	    class OwnerImpl: public MOwner {
 		public:
 		    OwnerImpl(System& aHost): mHost(aHost) {};
+		    static const char* Type() { return "OwnerImpl";}
+		    virtual MIface *DoGetObj(const char *aName) override {if (aName == Type()) return this; else return nullptr;}
 		    // From MOwner
 		    virtual void OnCompActivated(MComp* aComp) { mHost.HandleCompActivated(aComp);};
 		    virtual void OnCompUpdated(MComp* aComp) { mHost.HandleCompUpdated(aComp);};
@@ -52,13 +54,14 @@ namespace desa {
 	public:
 	    System(const string& aName, MOwner* aOwner);
 	    virtual ~System();
+	    virtual MIface *DoGetObj(const char *aName) override;
 	    void AddComp(Comp* aComp);
 	    void Run();
 	protected:
 	    void HandleCompActivated(MComp* aComp);
 	    void HandleCompUpdated(MComp* aComp);
 	    void HandleCompConfirmed(MComp* aComp);
-	    virtual const std::string getType() const { return type();}
+	    virtual const std::string GetType() const { return type();}
 	    // From MComp
 	    virtual void Update();
 	    virtual void Confirm();
