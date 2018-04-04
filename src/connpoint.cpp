@@ -106,7 +106,7 @@ class trOnIsCompatible: public Stt<ConnPointBase, const MConnPoint, bool, bool> 
 void ConnPointBase::doConnect(const MConnPoint& aCp, Tr<bool>* aNext)
 {
     auto* cb = new trOnIsCompatible(this, aCp, *aNext);
-    isCompatible(aCp, false, cb);
+    isCompatible(const_cast<MConnPoint*>(&aCp), false, cb);
 }
 
 bool ConnPointBase::Connect(const MConnPoint& aCp)
@@ -170,7 +170,7 @@ bool ConnPointBase::IsCompatible(const MConnPoint& aPair, bool aExtd) const
     return res;
 }
 
-void ConnPointBase::isCompatible(const MConnPoint& aPair, bool aExtd, Tr<bool>* aCb)
+void ConnPointBase::isCompatible(MConnPoint* aPair, bool aExtd, Tr<bool>* aCb)
 {
     /* Removed for a while. TODO to ronsider to avoid using dir
     bool res = false;
@@ -178,6 +178,11 @@ void ConnPointBase::isCompatible(const MConnPoint& aPair, bool aExtd, Tr<bool>* 
     res = !aExtd && !samedir || aExtd && samedir;
     aCb(res);
     */
+    (*aCb)(true);
+}
+
+void ConnPointBase::isCompatible2(MConnPoint* aPair, bool aExtd, Tr<bool>* aCb)
+{
     (*aCb)(true);
 }
 
@@ -287,9 +292,15 @@ bool Extention::IsCompatible(const MConnPoint& aPair, bool aExtd) const
 
 
 
+
 void ConnPoint::SIsCompatible::operator()()
 {
-    mGc.ConnPointBase::isCompatible(mPair, mExtd, &mStep1);
+    //mThread = thread(&ConnPointBase::isCompatible, dynamic_cast<ConnPointBase*>(&mGc), &mPair, mExtd, &mStep1);
+    //mThread.detach();
+    thread tt(&ConnPointBase::isCompatible2, &mGc, &mPair, mExtd, &mStep1);
+    //thread tt(&ConnPointBase::isCompatible, dynamic_cast<ConnPointBase*>(&mGc), &mPair, mExtd, &mStep1);
+    tt.detach();
+    //mGc.ConnPointBase::isCompatible(&mPair, mExtd, &mStep1);
 }
 
 void ConnPoint::SIsCompatible::St1::operator()(const bool& aI) {
@@ -337,6 +348,7 @@ void ConnPoint::SIsCompatible::St5::operator()(const string& aI) {
     } else {
 	mOc.mCb(false);
     }
+    delete &mOc;
 }
 
 MIface *ConnPoint::DoGetObj(const char *aName)
@@ -457,7 +469,7 @@ bool ConnPoint::DoDisconnect(const MConnPoint& aCp)
 
 bool ConnPoint::IsCompatible(const MConnPoint& aPair, bool aExtd) const
 {
-    bool res = ConnPoint::IsCompatible(aPair, aExtd);
+    bool res = ConnPointBase::IsCompatible(aPair, aExtd);
     if (res) {
 	// Checking if pair is extension
 	MConnPoint& gpair = const_cast<MConnPoint&>(aPair);

@@ -54,7 +54,7 @@ namespace desa {
 	    virtual void dir(Tr<MConnPoint::TDir>* aTr) const = 0;
 	    virtual void connect(const MConnPoint& aCp, Tr<bool>* aTr) = 0;
 	    virtual void disconnect(const MConnPoint& aCp, MCpClient* aClient) = 0;
-	    virtual void isCompatible(const MConnPoint& aPair, bool aExtd, Tr<bool>* aCb) = 0;
+	    virtual void isCompatible(MConnPoint* aPair, bool aExtd, Tr<bool>* aCb) = 0;
 	    //virtual void isCompatible(const MConnPoint& aPair, bool aExtd, void(*aCb)(bool)) const = 0; // To use std::function
 	    virtual void onPairChanged(MConnPoint* aPair, MCpClient* aClient) = 0;
 	    virtual void onMediatorChanged(MConnPoint* aMediator, MCpClient* aClient) = 0;

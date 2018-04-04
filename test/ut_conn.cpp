@@ -99,7 +99,7 @@ class SubcRoot: public System
 	    //o1.connect(i2, new function<void (bool)>(handler));
 	    //o1.connect(i2, trOnConnect::get(*this));
 	    auto* cb = new sOnConnect(this);
-	    o1.isCompatible(i2, false, cb);
+	    o1.isCompatible(&i2, false, cb);
 	    //o1.connect(i2, cb);
 	}
 	SubcRootInitConn* mConn;

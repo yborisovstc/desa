@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <map>
+#include <thread>
 #include <mconnpoint.h>
 #include "mdes.h"
 
@@ -43,7 +44,8 @@ namespace desa {
 	    virtual void dir(Tr<MConnPoint::TDir>* aTr) const override;
 	    virtual void connect(const MConnPoint& aCp, Tr<bool>* aTr) override;
 	    virtual void disconnect(const MConnPoint& aCp, MCpClient* aClient) override {};
-	    virtual void isCompatible(const MConnPoint& aPair, bool aExtd, Tr<bool>* aCb) override;
+	    virtual void isCompatible(MConnPoint* aPair, bool aExtd, Tr<bool>* aCb) override;
+	    void isCompatible2(MConnPoint* aPair, bool aExtd, Tr<bool>* aCb);
 	    //virtual void isCompatible(const MConnPoint& aPair, bool aExtd, void(*aCb)(bool)) const override;
 	    virtual void onPairChanged(MConnPoint* aPair, MCpClient* aClient) override {};
 	    virtual void onMediatorChanged(MConnPoint* aMediator, MCpClient* aClient) override {};
@@ -144,9 +146,10 @@ namespace desa {
 	    // From MConnPoint
 	    virtual bool DoDisconnect(const MConnPoint& aCp);
 	    virtual bool IsCompatible(const MConnPoint& aPair, bool aExtd = false) const;
-	    virtual void isCompatible(const MConnPoint& aPair, bool aExtd, Tr<bool>* aCb) override {
-		auto* handler = new SIsCompatible(this, aPair, aExtd, aCb);
+	    virtual void isCompatible(MConnPoint* aPair, bool aExtd, Tr<bool>* aCb) override {
+		auto* handler = new SIsCompatible(this, *aPair, aExtd, aCb);
 		(*handler)();
+		//delete handler;
 	    }
 	    virtual void OnPairChanged(MConnPoint* aPair);
 	    virtual bool IsConnected() const override;
@@ -175,6 +178,7 @@ namespace desa {
 		    bool mExtd;
 		    Tr<bool>& mCb;
 		    MJointPr* mJp;
+		    std::thread mThread;
 		private: St1 mStep1; St2 mStep2; St3 mStep3; St4 mStep4; St5 mStep5;
 	    };
 
